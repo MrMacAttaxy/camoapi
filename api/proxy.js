@@ -12,7 +12,7 @@ export default async function handler(req, res) {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.7012.3 Safari/537.36",
         "Accept": "*/*",
         "Accept-Language": "en-US,en;q=0.9",
-        "Accept-Encoding": "gzip, deflate, br",
+        "Accept-Encoding": "identity",
         "Cache-Control": "no-cache",
         "Pragma": "no-cache",
         "Connection": "keep-alive",
@@ -59,7 +59,7 @@ export default async function handler(req, res) {
 
       res.send(body);
     } else {
-      res.send(await response.arrayBuffer());
+      response.body.pipe(res);
     }
   } catch (error) {
     res.status(500).send("Error fetching the target URL.");
