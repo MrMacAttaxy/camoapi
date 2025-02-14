@@ -52,7 +52,6 @@ export default async function handler(req, res) {
 
       const script = `
         <script>
-          document.title = "Proxified: " + document.title;
           let link = document.createElement("link");
           link.rel = "icon";
           link.href = "https://www.google.com/s2/favicons?sz=64&domain=" + new URL("${targetUrl}").hostname;
@@ -92,7 +91,9 @@ export default async function handler(req, res) {
         return `<link rel="stylesheet" href="${proxyBase}${encodeURIComponent(link)}">`;
       });
 
-      body = body.replace(/<title>(.*?)<\/title>/, "<title>Proxified: $1</title>");
+      body = body.replace(/background(-image)?:\s*url\(["']?(https?:\/\/[^"')]+)["']?\)/gi, (_, prop, link) => {
+        return `background${prop ? "-image" : ""}: url("${proxyBase}${encodeURIComponent(link)}")`;
+      });
 
       res.setHeader("Content-Type", contentType);
       res.send(body);
