@@ -1,3 +1,5 @@
+import fetch from 'node-fetch';
+
 export default async function handler(req, res) {
   const url = new URL(req.url, `https://${req.headers.host}`);
   const targetUrl = url.searchParams.get("url");
@@ -20,12 +22,19 @@ export default async function handler(req, res) {
       },
     });
 
-    const contentType = response.headers.get("content-type");
-    res.setHeader("Content-Type", contentType);
+    const contentType = response.headers.get("Content-Type");
 
-    const body = await response.text();
-    res.send(body);
+    if (contentType && contentType.startsWith("image/") || contentType.startsWith("video/")) {
+      res.setHeader("Content-Type", contentType);
+      response.body.pipe(res);
+    } else {
+
+      res.setHeader("Content-Type", contentType);
+      const body = await response.text();
+      res.send(body);
+    }
   } catch (error) {
+    console.error(error);
     res.status(500).send("Error fetching the target URL.");
   }
 }
