@@ -56,8 +56,11 @@ export default async function handler(req, res) {
 
       res.send(body);
     } else {
-      const arrayBuffer = await response.arrayBuffer();
-      res.send(Buffer.from(arrayBuffer));
+      res.setHeader("Content-Length", response.headers.get("content-length") || ""); // Preserve file size
+      res.setHeader("Content-Disposition", response.headers.get("content-disposition") || "inline"); // Force display if needed
+
+      const readableStream = response.body;
+      readableStream.pipe(res); // Pipe binary data directly
     }
   } catch (error) {
     res.status(500).send("Error fetching the target URL.");
