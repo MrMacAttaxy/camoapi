@@ -1,5 +1,3 @@
-import fetch from 'node-fetch';
-
 export default async function handler(req, res) {
   const url = new URL(req.url, `https://${req.headers.host}`);
   const targetUrl = url.searchParams.get("url");
@@ -11,7 +9,7 @@ export default async function handler(req, res) {
   try {
     const response = await fetch(targetUrl, {
       headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.7012.3 Safari/537.36",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
         "Accept-Language": "en-US,en;q=0.9",
         "Accept-Encoding": "gzip, deflate, br",
@@ -22,19 +20,12 @@ export default async function handler(req, res) {
       },
     });
 
-    const contentType = response.headers.get("Content-Type");
+    const contentType = response.headers.get("content-type");
+    res.setHeader("Content-Type", contentType);
 
-    if (contentType && contentType.startsWith("image/") || contentType.startsWith("video/")) {
-      res.setHeader("Content-Type", contentType);
-      response.body.pipe(res);
-    } else {
-
-      res.setHeader("Content-Type", contentType);
-      const body = await response.text();
-      res.send(body);
-    }
+    const body = await response.text();
+    res.send(body);
   } catch (error) {
-    console.error(error);
     res.status(500).send("Error fetching the target URL.");
   }
 }
