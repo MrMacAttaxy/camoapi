@@ -2,7 +2,7 @@ export default async function handler(req, res) {
   const url = new URL(req.url, `https://${req.headers.host}`);
   const targetUrl = url.searchParams.get("url");
 
-  if (!targetUrl || !/^https?:\/\//.test(targetUrl)) {
+  if (!targetUrl || /^data:/.test(targetUrl) || !/^https?:\/\//.test(targetUrl)) {
     return res.status(400).send("Invalid or missing 'url' parameter.");
   }
 
@@ -35,9 +35,9 @@ export default async function handler(req, res) {
 
       res.send(body);
     } else {
-      const buffer = await response.arrayBuffer();
-      res.setHeader("Content-Length", buffer.byteLength);
-      res.status(response.status).send(Buffer.from(buffer));
+      const buffer = Buffer.from(await response.arrayBuffer());
+      res.setHeader("Content-Length", buffer.length);
+      res.status(response.status).send(buffer);
     }
   } catch (error) {
     res.status(500).send("Error fetching the target URL.");
