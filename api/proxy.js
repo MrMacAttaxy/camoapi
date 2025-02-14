@@ -51,14 +51,6 @@ export default async function handler(req, res) {
 
       body = body.replace("</body>", `${script}</body>`);
 
-      body = body.replace(/<source[^>]+src=["'](https?:\/\/[^"'>]+)["'][^>]*>/gi, (_, link) => {
-        return `<source src="${proxyBase}${encodeURIComponent(link)}">`;
-      });
-
-      body = body.replace(/<iframe[^>]+src=["'](https?:\/\/www.youtube.com[^"'>]+)["'][^>]*>/gi, (_, link) => {
-        return `<iframe src="${proxyBase}${encodeURIComponent(link)}"></iframe>`;
-      });
-
       body = body.replace(/(href|src|action)=["'](https?:\/\/[^"'>]+)["']/gi, (_, attr, link) => {
         return `${attr}="${proxyBase}${encodeURIComponent(link)}"`;
       });
@@ -69,6 +61,22 @@ export default async function handler(req, res) {
 
       body = body.replace(/<img[^>]+src=["'](https?:\/\/[^"'>]+)["'][^>]*>/gi, (_, link) => {
         return `<img src="${proxyBase}${encodeURIComponent(link)}">`;
+      });
+
+      body = body.replace(/<source[^>]+src=["'](https?:\/\/[^"'>]+)["'][^>]*>/gi, (_, link) => {
+        return `<source src="${proxyBase}${encodeURIComponent(link)}">`;
+      });
+
+      body = body.replace(/<iframe[^>]+src=["'](https?:\/\/[^"'>]+)["'][^>]*>/gi, (_, link) => {
+        return `<iframe src="${proxyBase}${encodeURIComponent(link)}"></iframe>`;
+      });
+
+      body = body.replace(/<script[^>]+src=["'](https?:\/\/[^"'>]+)["'][^>]*>/gi, (_, link) => {
+        return `<script src="${proxyBase}${encodeURIComponent(link)}"></script>`;
+      });
+
+      body = body.replace(/<link[^>]+href=["'](https?:\/\/[^"'>]+)["'][^>]*>/gi, (_, link) => {
+        return `<link href="${proxyBase}${encodeURIComponent(link)}">`;
       });
 
       res.setHeader("Content-Type", contentType);
