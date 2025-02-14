@@ -2,16 +2,14 @@ export default async function handler(req, res) {
   const url = new URL(req.url, `https://${req.headers.host}`);
   const targetUrl = url.searchParams.get("url");
 
-  if (!targetUrl || /^data:/.test(targetUrl) || !/^https?:\/\//.test(targetUrl)) {
-    return res.status(404).send(`
+  if (!targetUrl || !/^https?:\/\//.test(targetUrl)) {
+    return res.status(400).send(`
       <html>
-        <head>
-          <title>CamoAPI Error</title>
-        </head>
+        <head><title>CamoAPI Error</title></head>
         <body>
           <h1>CamoAPI Error</h1>
-          <p>Error Type: 404</p>
-          <p>Could not find the page you wanted!<br>Please Try Again</p>
+          <p>Error Type: 400</p>
+          <p>Invalid or missing 'url' parameter.</p>
         </body>
       </html>
     `);
@@ -23,20 +21,17 @@ export default async function handler(req, res) {
         "User-Agent": req.headers["user-agent"] || "Mozilla/5.0",
         "Referer": targetUrl,
         "Origin": targetUrl,
-        "X-Forwarded-For": req.headers["x-forwarded-for"] || req.connection.remoteAddress,
       },
     });
 
     if (!response.ok) {
       return res.status(404).send(`
         <html>
-          <head>
-            <title>CamoAPI Error</title>
-          </head>
+          <head><title>CamoAPI Error</title></head>
           <body>
             <h1>CamoAPI Error</h1>
             <p>Error Type: 404</p>
-            <p>Could not fetch the page at the provided URL.<br>Please try again with a valid URL.</p>
+            <p>Could not fetch the target page.</p>
           </body>
         </html>
       `);
@@ -50,6 +45,9 @@ export default async function handler(req, res) {
       const proxyBase = `${url.origin}${url.pathname}?url=`;
 
       body = body.replace(/(href|src|action)=["'](https?:\/\/[^"'>]+)["']/gi, (_, attr, link) => {
+        if (link.startsWith("https://www.youtube.com")) {
+          return `${attr}="${proxyBase}${encodeURIComponent(link)}"`;
+        }
         return `${attr}="${proxyBase}${encodeURIComponent(link)}"`;
       });
 
@@ -57,17 +55,12 @@ export default async function handler(req, res) {
         return `url("${proxyBase}${encodeURIComponent(link)}")`;
       });
 
-      body = body.replace(/<iframe[^>]+src=["'](https?:\/\/[^"'>]+)["'][^>]*>/gi, (_, link) => {
+      body = body.replace(/<iframe[^>]+src=["'](https?:\/\/www.youtube.com[^"'>]+)["'][^>]*>/gi, (_, link) => {
         return `<iframe src="${proxyBase}${encodeURIComponent(link)}"></iframe>`;
       });
 
       res.setHeader("Content-Type", contentType);
       res.send(body);
-    } else if (contentType.startsWith("image/") || contentType.startsWith("audio/") || contentType.startsWith("video/")) {
-      const buffer = Buffer.from(await response.arrayBuffer());
-      res.setHeader("Content-Type", contentType);
-      res.setHeader("Content-Length", buffer.length);
-      res.status(response.status).send(buffer);
     } else {
       const buffer = Buffer.from(await response.arrayBuffer());
       res.setHeader("Content-Type", contentType);
@@ -75,15 +68,14 @@ export default async function handler(req, res) {
       res.status(response.status).send(buffer);
     }
   } catch (error) {
-    return res.status(404).send(`
+    console.error(error);
+    res.status(500).send(`
       <html>
-        <head>
-          <title>CamoAPI Error</title>
-        </head>
+        <head><title>CamoAPI Error</title></head>
         <body>
           <h1>CamoAPI Error</h1>
-          <p>Error Type: 404</p>
-          <p>Could not find the page at the provided URL.<br>Please try again with a valid URL.</p>
+          <p>Error Type: 500</p>
+          <p>Could not fetch the target URL.</p>
         </body>
       </html>
     `);
