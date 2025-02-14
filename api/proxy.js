@@ -5,7 +5,10 @@ export default async function handler(req, res) {
   if (!targetUrl || !/^https?:\/\//.test(targetUrl)) {
     return res.status(400).send(`
       <html>
-        <head><title>CamoAPI Error</title></head>
+        <head>
+          <title>CamoAPI Error</title>
+          <link rel="icon" href="https://www.google.com/s2/favicons?sz=64&domain=camoapi.vercel.app" />
+        </head>
         <body>
           <h1>CamoAPI Error</h1>
           <p>Error Type: 400</p>
@@ -13,16 +16,6 @@ export default async function handler(req, res) {
         </body>
       </html>
     `);
-  }
-
-  if (targetUrl.includes("google.com/search")) {
-    const searchUrl = new URL(targetUrl);
-    searchUrl.searchParams.delete("sca_esv");
-    searchUrl.searchParams.delete("source");
-    searchUrl.searchParams.delete("ei");
-    searchUrl.searchParams.delete("iflsig");
-
-    return res.redirect(searchUrl.toString());
   }
 
   try {
@@ -37,7 +30,10 @@ export default async function handler(req, res) {
     if (!response.ok) {
       return res.status(404).send(`
         <html>
-          <head><title>CamoAPI Error</title></head>
+          <head>
+            <title>CamoAPI Error</title>
+            <link rel="icon" href="https://www.google.com/s2/favicons?sz=64&domain=camoapi.vercel.app" />
+          </head>
           <body>
             <h1>CamoAPI Error</h1>
             <p>Error Type: 404</p>
@@ -50,13 +46,20 @@ export default async function handler(req, res) {
     const contentType = response.headers.get("content-type") || "";
     res.setHeader("Access-Control-Allow-Origin", "*");
 
-    if (contentType.startsWith("text/html") || contentType.startsWith("text/")) {
+    if (contentType.startsWith("text/html")) {
       let body = await response.text();
       const proxyBase = `${url.origin}${url.pathname}?url=`;
 
       const script = `
-       <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
-       <script>eruda.init();</script>
+        <script>
+          document.title = "Proxified: " + document.title;
+          let link = document.createElement("link");
+          link.rel = "icon";
+          link.href = "https://www.google.com/s2/favicons?sz=64&domain=" + new URL("${targetUrl}").hostname;
+          document.head.appendChild(link);
+        </script>
+        <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+        <script>eruda.init();</script>
       `;
 
       body = body.replace("</body>", `${script}</body>`);
@@ -85,9 +88,11 @@ export default async function handler(req, res) {
         return `<script src="${proxyBase}${encodeURIComponent(link)}"></script>`;
       });
 
-      body = body.replace(/<link[^>]+href=["'](https?:\/\/[^"'>]+)["'][^>]*>/gi, (_, link) => {
-        return `<link href="${proxyBase}${encodeURIComponent(link)}">`;
+      body = body.replace(/<link[^>]+rel=["']stylesheet["'][^>]+href=["'](https?:\/\/[^"'>]+)["'][^>]*>/gi, (_, link) => {
+        return `<link rel="stylesheet" href="${proxyBase}${encodeURIComponent(link)}">`;
       });
+
+      body = body.replace(/<title>(.*?)<\/title>/, "<title>Proxified: $1</title>");
 
       res.setHeader("Content-Type", contentType);
       res.send(body);
@@ -98,10 +103,12 @@ export default async function handler(req, res) {
       res.status(response.status).send(buffer);
     }
   } catch (error) {
-    console.error(error);
     res.status(500).send(`
       <html>
-        <head><title>CamoAPI Error</title></head>
+        <head>
+          <title>CamoAPI Error</title>
+          <link rel="icon" href="https://www.google.com/s2/favicons?sz=64&domain=camoapi.vercel.app" />
+        </head>
         <body>
           <h1>CamoAPI Error</h1>
           <p>Error Type: 500</p>
