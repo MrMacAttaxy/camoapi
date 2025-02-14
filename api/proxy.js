@@ -51,6 +51,10 @@ export default async function handler(req, res) {
 
       body = body.replace("</body>", `${script}</body>`);
 
+      body = body.replace(/<source[^>]+src=["'](https?:\/\/[^"'>]+)["'][^>]*>/gi, (_, link) => {
+        return `<source src="${proxyBase}${encodeURIComponent(link)}">`;
+      });
+
       body = body.replace(/<iframe[^>]+src=["'](https?:\/\/www.youtube.com[^"'>]+)["'][^>]*>/gi, (_, link) => {
         return `<iframe src="${proxyBase}${encodeURIComponent(link)}"></iframe>`;
       });
