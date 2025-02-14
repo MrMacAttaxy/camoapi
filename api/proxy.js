@@ -15,6 +15,16 @@ export default async function handler(req, res) {
     `);
   }
 
+  if (targetUrl.includes("google.com/search")) {
+    const searchUrl = new URL(targetUrl);
+    searchUrl.searchParams.delete("sca_esv");
+    searchUrl.searchParams.delete("source");
+    searchUrl.searchParams.delete("ei");
+    searchUrl.searchParams.delete("iflsig");
+
+    return res.redirect(searchUrl.toString());
+  }
+
   try {
     const response = await fetch(targetUrl, {
       headers: {
@@ -45,8 +55,8 @@ export default async function handler(req, res) {
       const proxyBase = `${url.origin}${url.pathname}?url=`;
 
       const script = `
-        <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
-        <script>eruda.init();</script>
+       <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+       <script>eruda.init();</script>
       `;
 
       body = body.replace("</body>", `${script}</body>`);
