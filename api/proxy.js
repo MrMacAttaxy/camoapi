@@ -22,17 +22,39 @@ export default async function handler(req, res) {
 
     const contentType = response.headers.get("content-type") || "";
     res.setHeader("Content-Type", contentType);
+    res.setHeader("Access-Control-Allow-Origin", "*");
+
+    const proxyBase = `https://${req.headers.host}${url.pathname}?url=`;
 
     if (contentType.includes("text/html")) {
       let body = await response.text();
-      const proxyBase = `https://${req.headers.host}${url.pathname}?url=`;
 
       body = body.replace(/(href|src|action)=["'](https?:\/\/[^"'>]+)["']/gi, (match, attr, link) => {
         return `${attr}="${proxyBase}${encodeURIComponent(link)}"`;
       });
 
+      body = body.replace(/window\.location\.href\s*=\s*["'](https?:\/\/[^"']+)["']/gi, (match, link) => {
+        return `window.location.href="${proxyBase}${encodeURIComponent(link)}"`;
+      });
+
       body = body.replace(/<button([^>]*) onclick=["']location\.href=['"](https?:\/\/[^"'>]+)['"]/gi, (match, btnAttrs, link) => {
         return `<button${btnAttrs} onclick="location.href='${proxyBase}${encodeURIComponent(link)}'"`;
+      });
+
+      res.send(body);
+    } else if (contentType.includes("text/css")) {
+      let body = await response.text();
+
+      body = body.replace(/url\(["']?(https?:\/\/[^"')]+)["']?\)/gi, (match, link) => {
+        return `url("${proxyBase}${encodeURIComponent(link)}")`;
+      });
+
+      res.send(body);
+    } else if (contentType.includes("application/javascript") || contentType.includes("text/javascript")) {
+      let body = await response.text();
+
+      body = body.replace(/(["'`])https?:\/\/[^"'`]+(["'`])/gi, (match, quote, link) => {
+        return `${quote}${proxyBase}${encodeURIComponent(link)}${quote}`;
       });
 
       res.send(body);
