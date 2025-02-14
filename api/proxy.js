@@ -67,6 +67,10 @@ export default async function handler(req, res) {
         return `url("${proxyBase}${encodeURIComponent(link)}")`;
       });
 
+      body = body.replace(/<img[^>]+src=["'](https?:\/\/[^"'>]+)["'][^>]*>/gi, (_, link) => {
+        return `<img src="${proxyBase}${encodeURIComponent(link)}">`;
+      });
+
       res.setHeader("Content-Type", contentType);
       res.send(body);
     } else {
