@@ -32,6 +32,10 @@ export default async function handler(req, res) {
         return `url("${proxyBase}${encodeURIComponent(link)}")`;
       });
 
+      body = body.replace(/<iframe[^>]+src=["'](https?:\/\/[^"'>]+)["'][^>]*>/gi, (_, link) => {
+        return `<iframe src="${proxyBase}${encodeURIComponent(link)}"></iframe>`;
+      });
+
       res.setHeader("Content-Type", contentType);
       res.send(body);
     } else if (contentType.startsWith("image/") || contentType.startsWith("audio/") || contentType.startsWith("video/")) {
