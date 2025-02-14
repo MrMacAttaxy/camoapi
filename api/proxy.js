@@ -3,7 +3,18 @@ export default async function handler(req, res) {
   const targetUrl = url.searchParams.get("url");
 
   if (!targetUrl || /^data:/.test(targetUrl) || !/^https?:\/\//.test(targetUrl)) {
-    return res.status(400).send("Invalid or missing 'url' parameter.");
+    return res.status(404).send(`
+      <html>
+        <head>
+          <title>CamoAPI Error</title>
+        </head>
+        <body>
+          <h1>CamoAPI Error</h1>
+          <p>Error Type: 404</p>
+          <p>Could not find the page you wanted!<br>Please Try Again</p>
+        </body>
+      </html>
+    `);
   }
 
   try {
