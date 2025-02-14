@@ -25,7 +25,18 @@ export default async function handler(req, res) {
     });
 
     if (!response.ok) {
-      return res.status(response.status).send("Failed to fetch resource.");
+      return res.status(404).send(`
+        <html>
+          <head>
+            <title>CamoAPI Error</title>
+          </head>
+          <body>
+            <h1>CamoAPI Error</h1>
+            <p>Error Type: 404</p>
+            <p>Could not fetch the page at the provided URL.<br>Please try again with a valid URL.</p>
+          </body>
+        </html>
+      `);
     }
 
     const contentType = response.headers.get("content-type") || "";
@@ -61,6 +72,17 @@ export default async function handler(req, res) {
       res.status(response.status).send(buffer);
     }
   } catch (error) {
-    res.status(500).send("Error fetching the target URL.");
+    return res.status(404).send(`
+      <html>
+        <head>
+          <title>CamoAPI Error</title>
+        </head>
+        <body>
+          <h1>CamoAPI Error</h1>
+          <p>Error Type: 404</p>
+          <p>Could not find the page at the provided URL.<br>Please try again with a valid URL.</p>
+        </body>
+      </html>
+    `);
   }
 }
