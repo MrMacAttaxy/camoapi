@@ -21,6 +21,9 @@ export default async function handler(req, res) {
     const response = await fetch(targetUrl, {
       headers: {
         "User-Agent": req.headers["user-agent"] || "Mozilla/5.0",
+        "Referer": targetUrl,
+        "Origin": targetUrl,
+        "X-Forwarded-For": req.headers["x-forwarded-for"] || req.connection.remoteAddress,
       },
     });
 
