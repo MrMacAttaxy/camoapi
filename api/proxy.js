@@ -18,10 +18,9 @@ export default async function handler(req, res) {
     }
 
     const contentType = response.headers.get("content-type") || "";
-    res.setHeader("Content-Type", contentType);
     res.setHeader("Access-Control-Allow-Origin", "*");
 
-    if (contentType.startsWith("text/html")) {
+    if (contentType.startsWith("text/html") || contentType.startsWith("text/")) {
       let body = await response.text();
       const proxyBase = `${url.origin}${url.pathname}?url=`;
 
@@ -33,9 +32,16 @@ export default async function handler(req, res) {
         return `url("${proxyBase}${encodeURIComponent(link)}")`;
       });
 
+      res.setHeader("Content-Type", contentType);
       res.send(body);
+    } else if (contentType.startsWith("image/") || contentType.startsWith("audio/") || contentType.startsWith("video/")) {
+      const buffer = Buffer.from(await response.arrayBuffer());
+      res.setHeader("Content-Type", contentType);
+      res.setHeader("Content-Length", buffer.length);
+      res.status(response.status).send(buffer);
     } else {
       const buffer = Buffer.from(await response.arrayBuffer());
+      res.setHeader("Content-Type", contentType);
       res.setHeader("Content-Length", buffer.length);
       res.status(response.status).send(buffer);
     }
