@@ -44,19 +44,24 @@ export default async function handler(req, res) {
       let body = await response.text();
       const proxyBase = `${url.origin}${url.pathname}?url=`;
 
+      const script = `
+        <script>
+          javascript:(function()%7Bvar%20erudaScript%3Ddocument.createElement('script')%3BerudaScript.src%3D%22%2F%2Fcdn.jsdelivr.net%2Fnpm%2Feruda%2Feruda.min.js%22%3Bvar%20erudaTimingScript%3Ddocument.createElement('script')%3BerudaTimingScript.src%3D%22%2F%2Fcdn.jsdelivr.net%2Fnpm%2Feruda-timing%2Feruda-timing.min.js%22%3Bvar%20erudaCodeScript%3Ddocument.createElement('script')%3BerudaCodeScript.src%3D%22%2F%2Fcdn.jsdelivr.net%2Fnpm%2Feruda-code%2Feruda-code.min.js%22%3Bvar%20erudaDomScript%3Ddocument.createElement('script')%3BerudaDomScript.src%3D%22%2F%2Fcdn.jsdelivr.net%2Fnpm%2Feruda-dom%2Feruda-dom.min.js%22%3Bdocument.body.appendChild(erudaScript)%3BerudaScript.onload%3Dfunction()%7Beruda.init()%3Bdocument.body.appendChild(erudaTimingScript)%3BerudaTimingScript.onload%3Dfunction()%7Beruda.add(erudaTiming)%7D%3Bdocument.body.appendChild(erudaCodeScript)%3BerudaCodeScript.onload%3Dfunction()%7Beruda.add(erudaCode)%7D%3Bdocument.body.appendChild(erudaDomScript)%3BerudaDomScript.onload%3Dfunction()%7Beruda.add(erudaDom)%7D%3B%7D%7D)()%3B
+        </script>
+      `;
+
+      body = body.replace("</body>", `${script}</body>`);
+
+      body = body.replace(/<iframe[^>]+src=["'](https?:\/\/www.youtube.com[^"'>]+)["'][^>]*>/gi, (_, link) => {
+        return `<iframe src="${proxyBase}${encodeURIComponent(link)}"></iframe>`;
+      });
+
       body = body.replace(/(href|src|action)=["'](https?:\/\/[^"'>]+)["']/gi, (_, attr, link) => {
-        if (link.startsWith("https://www.youtube.com")) {
-          return `${attr}="${proxyBase}${encodeURIComponent(link)}"`;
-        }
         return `${attr}="${proxyBase}${encodeURIComponent(link)}"`;
       });
 
       body = body.replace(/url\(["']?(https?:\/\/[^"')]+)["']?\)/gi, (_, link) => {
         return `url("${proxyBase}${encodeURIComponent(link)}")`;
-      });
-
-      body = body.replace(/<iframe[^>]+src=["'](https?:\/\/www.youtube.com[^"'>]+)["'][^>]*>/gi, (_, link) => {
-        return `<iframe src="${proxyBase}${encodeURIComponent(link)}"></iframe>`;
       });
 
       res.setHeader("Content-Type", contentType);
