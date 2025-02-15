@@ -1,15 +1,15 @@
 {
-  "name": "CamoAPI",
-  "version": "1.0.1",
-  "main": "api/proxy.js",
-  "scripts": {
-    "dev": "Camouflage",
-    "deploy": "vercel"
-  },
-  "dependencies": {
-    "node-fetch": "^3.2.0"
-  },
-  "engines": {
-    "node": "22.x"
-  }
+  "version": 2,
+  "builds": [
+    {
+      "src": "api/proxy.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/proxy",
+      "dest": "/api/proxy.js"
+    }
+  ]
 }
