@@ -19,15 +19,6 @@ app.get('/proxy', async (req, res) => {
   targetUrl = decodeURIComponent(targetUrl);
 
   try {
-    if (targetUrl.includes('google.com/search')) {
-      // Handle Google search specifically
-      const searchUrl = targetUrl.split('?')[0];
-
-      if (searchUrl.includes('google.com/search')) {
-        return res.redirect(targetUrl);
-      }
-    }
-
     const response = await axios.get(targetUrl, {
       responseType: 'arraybuffer',
       headers: {
