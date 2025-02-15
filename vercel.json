@@ -3,8 +3,8 @@
   "routes": [
     {
       "src": "/api/proxy",
-      "dest": "/api/proxy",
-      "methods": ["GET", "OPTIONS"]
+      "dest": "/api/proxy.js",
+      "methods": ["GET"]
     }
   ]
 }
