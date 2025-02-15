@@ -16,7 +16,7 @@ app.get('/proxy', async (req, res) => {
     return res.status(400).send('No target URL provided');
   }
 
-  targetUrl = decodeURIComponent(targetUrl);
+  targetUrl = decodeURIComponent(targetUrl); // Decode the initial proxied URL
 
   try {
     const response = await axios.get(targetUrl, {
@@ -107,21 +107,21 @@ app.get('/proxy', async (req, res) => {
         </script>
       `;
 
-      // Ensure all resources are correctly proxied, maintaining original URL structure
+      // Ensure all proxified URLs are decoded automatically
       htmlContent = htmlContent.replace(/(src|href|srcset)="([^"]+)"/g, (match, p1, p2) => {
-        let newUrl = p2;
-        if (p2.startsWith('/')) {
-          newUrl = targetUrl + p2;
+        let newUrl = decodeURIComponent(p2); // Decode the proxified URL
+        if (newUrl.startsWith('/')) {
+          newUrl = targetUrl + newUrl;
         }
         return `${p1}="/proxy?url=${encodeURIComponent(newUrl)}"`;
       });
 
       htmlContent = htmlContent.replace(/url\(\s*["']?(\/[^"')]+)["']?\s*\)/g, (match, p1) => {
-        return `url("/proxy?url=${encodeURIComponent(targetUrl + p1)}")`;
+        return `url("/proxy?url=${encodeURIComponent(targetUrl + decodeURIComponent(p1))}")`;
       });
 
       htmlContent = htmlContent.replace(/<script src="(\/[^"]+)"/g, (match, p1) => {
-        return `<script src="/proxy?url=${encodeURIComponent(targetUrl + p1)}"`;
+        return `<script src="/proxy?url=${encodeURIComponent(targetUrl + decodeURIComponent(p1))}"`;
       });
 
       htmlContent = htmlContent.replace('</body>', `${script}</body>`);
@@ -132,7 +132,7 @@ app.get('/proxy', async (req, res) => {
       let cssContent = response.data.toString('utf-8');
 
       cssContent = cssContent.replace(/url\(\s*["']?(\/[^"')]+)["']?\s*\)/g, (match, p1) => {
-        return `url("/proxy?url=${encodeURIComponent(targetUrl + p1)}")`;
+        return `url("/proxy?url=${encodeURIComponent(targetUrl + decodeURIComponent(p1))}")`;
       });
 
       res.setHeader('Content-Type', 'text/css');
