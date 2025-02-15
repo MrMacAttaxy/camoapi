@@ -35,6 +35,8 @@ app.get('/proxy', async (req, res) => {
       let htmlContent = response.data.toString('utf-8');
 
       const injectScript = `
+        <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+        <script>eruda.init();</script>
         <script>
           document.querySelectorAll('a').forEach(a => {
             let href = a.href;
