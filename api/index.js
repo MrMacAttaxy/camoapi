@@ -30,18 +30,20 @@ app.get('/proxy', async (req, res) => {
     if (contentType.includes('text/html')) {
       let htmlContent = response.data.toString('utf-8');
 
-      // Inject eruda script for debugging
       const script = `
         <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
         <script>eruda.init();</script>
       `;
       
+      htmlContent = htmlContent.replace(/(src|href)="(\/[^"]+)"/g, (match, p1, p2) => {
+        return `${p1}="/proxy?url=${encodeURIComponent(targetUrl + p2)}"`;
+      });
+
       htmlContent = htmlContent.replace('</body>', `${script}</body>`);
 
       res.setHeader('Content-Type', 'text/html');
       res.status(response.status).send(htmlContent);
     } else {
-      // For media content, handle as binary data
       res.setHeader('Content-Type', contentType);
       res.status(response.status).send(Buffer.from(response.data));
     }
