@@ -1,23 +1,22 @@
-const express = require('express');
 const axios = require('axios');
 
-const app = express();
+module.exports = async (req, res) => {
+  const { query } = req;
+  const targetUrl = query.url;
 
-app.get('/proxy/*', async (req, res) => {
-  const targetUrl = req.params[0];
+  if (!targetUrl) {
+    return res.status(400).send('No target URL provided');
+  }
 
   try {
     const response = await axios.get(targetUrl, {
       headers: {
-        'User-Agent': req.get('User-Agent'),
+        'User-Agent': req.headers['user-agent'],
       },
     });
+
     res.status(response.status).send(response.data);
   } catch (error) {
     res.status(500).send('Error proxying request');
   }
-});
-
-module.exports = (req, res) => {
-  app(req, res);
 };
