@@ -2,6 +2,7 @@ const express = require('express');
 const axios = require('axios');
 const app = express();
 const bodyParser = require('body-parser');
+const https = require('https');
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
@@ -42,8 +43,7 @@ app.all('/proxy', async (req, res) => {
 
     if (contentType.includes('text/html')) {
       let htmlContent = response.data.toString('utf-8');
-
-      const injectScript = `
+      htmlContent = htmlContent.replace('</body>', `
         <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
         <script>eruda.init();</script>
         <script>
@@ -95,9 +95,7 @@ app.all('/proxy', async (req, res) => {
             return originalFetch(input, init);
           };
         </script>
-      `;
-
-      htmlContent = htmlContent.replace('</body>', `${injectScript}</body>`);
+      </body>`);
 
       res.setHeader('Content-Type', 'text/html');
       res.status(response.status).send(htmlContent);
