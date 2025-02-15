@@ -1,6 +1,8 @@
-@type {import('next').NextConfig}
 const nextConfig = {
   reactStrictMode: true,
+  experimental: {
+    appDir: true
+  },
   async headers() {
     return [
       {
@@ -8,11 +10,11 @@ const nextConfig = {
         headers: [
           { key: "Access-Control-Allow-Origin", value: "*" },
           { key: "Access-Control-Allow-Methods", value: "GET, OPTIONS" },
-          { key: "Access-Control-Allow-Headers", value: "Origin, X-Requested-With, Content-Type, Accept" },
-        ],
-      },
+          { key: "Access-Control-Allow-Headers", value: "Origin, X-Requested-With, Content-Type, Accept" }
+        ]
+      }
     ];
-  },
+  }
 };
 
 module.exports = nextConfig;
