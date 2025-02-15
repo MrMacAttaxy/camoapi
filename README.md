@@ -19,6 +19,7 @@ This depends on your wifi
 ## Why Use CamoAPI
 **CamoAPI** is one of the **easiest and fastest** static proxies you can use, it has **inspect** capabilities unblocked for **all** users, and it is being updated **daily**.
 ## How to use
+## YOU MUST GIVE CREDIT
 To use Camohost you need to copy the /api/ files into your website
 Then go to https://[yourwebsite].[yourwebsite]**/api/proxy?url=https://[url, like google.com, github.com, etc...]
 ## Discord
