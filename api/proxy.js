@@ -11,19 +11,7 @@ export default async function handler(req, res) {
   const targetUrl = url.searchParams.get("url");
 
   if (!targetUrl || !/^https?:\/\//.test(targetUrl)) {
-    return res.status(400).send(`
-      <html>
-        <head>
-          <title>CamoAPI Error</title>
-          <link rel="icon" href="https://www.google.com/s2/favicons?sz=64&domain=camoapi.vercel.app" />
-        </head>
-        <body>
-          <h1>CamoAPI Error</h1>
-          <p>Error Type: 400</p>
-          <p>Invalid or missing 'url' parameter.</p>
-        </body>
-      </html>
-    `);
+    return res.status(400).send(`<html><head><title>CamoAPI Error</title></head><body><h1>400 - Invalid or missing 'url' parameter.</h1></body></html>`);
   }
 
   try {
@@ -36,19 +24,7 @@ export default async function handler(req, res) {
     });
 
     if (!response.ok) {
-      return res.status(404).send(`
-        <html>
-          <head>
-            <title>CamoAPI Error</title>
-            <link rel="icon" href="https://www.google.com/s2/favicons?sz=64&domain=camoapi.vercel.app" />
-          </head>
-          <body>
-            <h1>CamoAPI Error</h1>
-            <p>Error Type: 404</p>
-            <p>Could not fetch the target page.</p>
-          </body>
-        </html>
-      `);
+      return res.status(404).send(`<html><head><title>CamoAPI Error</title></head><body><h1>404 - Could not fetch the target page.</h1></body></html>`);
     }
 
     const contentType = response.headers.get("content-type") || "";
@@ -58,8 +34,8 @@ export default async function handler(req, res) {
       let body = await response.text();
       const proxyBase = `${url.origin}${url.pathname}?url=`;
 
-      body = body.replace(/(href|src|action)=["'](https?:\/\/[^"'>]+)["']/gi, (_, attr, link) => {
-        return `${attr}="${proxyBase}${encodeURIComponent(link)}"`;
+      body = body.replace(/(href|src|action|data|poster)=(["']?)(https?:\/\/[^"'\s>]+)(["']?)/gi, (_, attr, quote1, link, quote2) => {
+        return `${attr}=${quote1}${proxyBase}${encodeURIComponent(link)}${quote2}`;
       });
 
       body = body.replace(/url\(["']?(https?:\/\/[^"')]+)["']?\)/gi, (_, link) => {
@@ -73,18 +49,6 @@ export default async function handler(req, res) {
       res.status(response.status).send(buffer);
     }
   } catch (error) {
-    res.status(500).send(`
-      <html>
-        <head>
-          <title>CamoAPI Error</title>
-          <link rel="icon" href="https://www.google.com/s2/favicons?sz=64&domain=camoapi.vercel.app" />
-        </head>
-        <body>
-          <h1>CamoAPI Error</h1>
-          <p>Error Type: 500</p>
-          <p>Could not fetch the target URL.</p>
-        </body>
-      </html>
-    `);
+    res.status(500).send(`<html><head><title>CamoAPI Error</title></head><body><h1>500 - Could not fetch the target URL.</h1></body></html>`);
   }
 }
