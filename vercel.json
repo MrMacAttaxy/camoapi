@@ -3,7 +3,7 @@
   "builds": [
     {
       "src": "package.json",
-      "use": "@vercel/node"
+      "use": "@vercel/next"
     }
   ],
   "routes": [
@@ -11,6 +11,10 @@
       "src": "/api/proxy",
       "dest": "/api/proxy.js",
       "methods": ["GET"]
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/public/$1"
     }
   ]
 }
