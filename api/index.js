@@ -24,7 +24,9 @@ app.get('/proxy', async (req, res) => {
       headers: {
         'User-Agent': req.headers['user-agent'],
         'Accept': '*/*',
+        'Cache-Control': 'no-cache', // Avoid caching issues
       },
+      maxRedirects: 10, // Limit redirects to prevent infinite loops
     });
 
     const contentType = response.headers['content-type'];
