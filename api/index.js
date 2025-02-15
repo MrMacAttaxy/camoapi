@@ -65,7 +65,6 @@ app.get('/proxy', async (req, res) => {
             if (e.target.tagName === 'A') {
               const link = e.target;
               let linkHref = link.href;
-
               if (linkHref && !linkHref.startsWith('/proxy?url=')) {
                 link.href = '/proxy?url=' + encodeURIComponent(linkHref);
               }
@@ -89,6 +88,22 @@ app.get('/proxy', async (req, res) => {
             }
             return originalOpen.apply(window, [url]);
           };
+
+          document.addEventListener('DOMContentLoaded', function() {
+            const metaTags = document.getElementsByTagName('meta');
+            Array.from(metaTags).forEach(tag => {
+              if (tag.getAttribute('http-equiv') === 'refresh') {
+                let content = tag.getAttribute('content');
+                const match = content && content.match(/url=([^;]+)/);
+                if (match && match[1]) {
+                  let newUrl = match[1];
+                  if (newUrl && !newUrl.startsWith('/proxy?url=')) {
+                    tag.setAttribute('content', 'url=/proxy?url=' + encodeURIComponent(newUrl));
+                  }
+                }
+              }
+            });
+          });
         </script>
       `;
 
