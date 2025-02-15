@@ -19,14 +19,23 @@ app.get('/proxy', async (req, res) => {
   targetUrl = decodeURIComponent(targetUrl);
 
   try {
+    if (targetUrl.includes('google.com/search')) {
+      // Handle Google search specifically
+      const searchUrl = targetUrl.split('?')[0];
+
+      if (searchUrl.includes('google.com/search')) {
+        return res.redirect(targetUrl);
+      }
+    }
+
     const response = await axios.get(targetUrl, {
       responseType: 'arraybuffer',
       headers: {
         'User-Agent': req.headers['user-agent'],
         'Accept': '*/*',
-        'Cache-Control': 'no-cache', // Avoid caching issues
+        'Cache-Control': 'no-cache',
       },
-      maxRedirects: 10, // Limit redirects to prevent infinite loops
+      maxRedirects: 10,
     });
 
     const contentType = response.headers['content-type'];
@@ -37,8 +46,32 @@ app.get('/proxy', async (req, res) => {
       const script = `
         <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
         <script>eruda.init();</script>
+        <script>
+          document.addEventListener('submit', function(e) {
+            let form = e.target;
+            if (form && form.action) {
+              let originalAction = form.action;
+              if (originalAction && !originalAction.startsWith('/proxy?url=')) {
+                form.action = '/proxy?url=' + encodeURIComponent(originalAction);
+              }
+            }
+          });
+
+          const inputs = document.querySelectorAll('input[type="search"], input[type="text"]');
+          inputs.forEach(input => {
+            input.addEventListener('keydown', function(e) {
+              if (e.key === 'Enter' && input.form) {
+                let form = input.form;
+                let originalAction = form.action;
+                if (originalAction && !originalAction.startsWith('/proxy?url=')) {
+                  form.action = '/proxy?url=' + encodeURIComponent(originalAction);
+                }
+              }
+            });
+          });
+        </script>
       `;
-      
+
       htmlContent = htmlContent.replace(/(src|href|srcset)="(\/[^"]+)"/g, (match, p1, p2) => {
         return `${p1}="/proxy?url=${encodeURIComponent(targetUrl + p2)}"`;
       });
