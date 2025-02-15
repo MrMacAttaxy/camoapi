@@ -37,14 +37,17 @@ app.get('/proxy', async (req, res) => {
         <script>eruda.init();</script>
       `;
       
+      // Replace all relative URLs for src, srcset, href, and script src
       htmlContent = htmlContent.replace(/(src|href|srcset)="(\/[^"]+)"/g, (match, p1, p2) => {
         return `${p1}="/proxy?url=${encodeURIComponent(targetUrl + p2)}"`;
       });
 
+      // Special case for scripts, rewriting their src
       htmlContent = htmlContent.replace(/<script src="(\/[^"]+)"/g, (match, p1) => {
         return `<script src="/proxy?url=${encodeURIComponent(targetUrl + p1)}"`;
       });
 
+      // Inject the script at the end of the body
       htmlContent = htmlContent.replace('</body>', `${script}</body>`);
 
       res.setHeader('Content-Type', 'text/html');
