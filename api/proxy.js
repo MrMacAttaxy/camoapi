@@ -1,4 +1,7 @@
 export default async function handler(req, res) {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+
   const url = new URL(req.url, `https://${req.headers.host}`);
   const targetUrl = url.searchParams.get("url");
 
