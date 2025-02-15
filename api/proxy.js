@@ -34,7 +34,7 @@ export default async function handler(req, res) {
       let body = await response.text();
       const proxyBase = `${url.origin}${url.pathname}?url=`;
 
-      body = body.replace(/(href|src|action|data|poster)=(["']?)(https?:\/\/[^"'\s>]+)(["']?)/gi, (_, attr, quote1, link, quote2) => {
+      body = body.replace(/(href|src|action|data|poster|background)=(["']?)(https?:\/\/[^"'\s>]+)(["']?)/gi, (_, attr, quote1, link, quote2) => {
         return `${attr}=${quote1}${proxyBase}${encodeURIComponent(link)}${quote2}`;
       });
 
