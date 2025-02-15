@@ -17,9 +17,6 @@ app.get('/proxy', async (req, res) => {
   }
 
   targetUrl = decodeURIComponent(targetUrl);
-  targetUrl = targetUrl.replace(/%3A/g, ':').replace(/%2F/g, '/'); // Decode additional parts if necessary
-
-  console.log(`Proxying request to: ${targetUrl}`);
 
   try {
     const response = await axios.get(targetUrl, {
@@ -33,11 +30,10 @@ app.get('/proxy', async (req, res) => {
     });
 
     const contentType = response.headers['content-type'];
-    console.log(`Content-Type: ${contentType}`);
 
-    // If the content is HTML, handle it as before (inject script)
     if (contentType.includes('text/html')) {
       let htmlContent = response.data.toString('utf-8');
+
       const injectScript = `
         <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
         <script>eruda.init();</script>
@@ -98,20 +94,29 @@ app.get('/proxy', async (req, res) => {
           };
         </script>
       `;
+
       htmlContent = htmlContent.replace('</body>', `${injectScript}</body>`);
 
       res.setHeader('Content-Type', 'text/html');
       res.status(response.status).send(htmlContent);
+    } else if (contentType.includes('text/css')) {
+      let cssContent = response.data.toString('utf-8');
+      cssContent = cssContent.replace(/url\(\s*["']?(\/[^"')]+)["']?\s*\)/g, (match, p1) => {
+        return `url("/proxy?url=${encodeURIComponent(targetUrl + p1)}")`;
+      });
 
-    // For other types like images, handle them directly and send the response
+      res.setHeader('Content-Type', 'text/css');
+      res.status(response.status).send(cssContent);
+    } else if (contentType.includes('image/') || contentType.includes('video/')) {
+      res.setHeader('Content-Type', contentType);
+      res.status(response.status).send(Buffer.from(response.data));
     } else {
       res.setHeader('Content-Type', contentType);
       res.status(response.status).send(Buffer.from(response.data));
     }
 
   } catch (error) {
-    console.error('Error proxying request:', error.message);
-    console.error('Error details:', error.response ? error.response.data : error);
+    console.error('Error proxying request:', error);
     res.status(500).send('Error proxying request');
   }
 });
