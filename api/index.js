@@ -61,7 +61,6 @@ app.get('/proxy', async (req, res) => {
             });
           });
 
-          // Intercept all anchor tag clicks
           document.addEventListener('click', function(e) {
             if (e.target.tagName === 'A') {
               const link = e.target;
@@ -73,7 +72,6 @@ app.get('/proxy', async (req, res) => {
             }
           });
 
-          // Handle window.location changes
           const originalLocation = window.location;
           Object.defineProperty(window, 'location', {
             set: function(value) {
@@ -84,7 +82,6 @@ app.get('/proxy', async (req, res) => {
             }
           });
 
-          // Handle window.open redirects
           const originalOpen = window.open;
           window.open = function(url) {
             if (url && !url.startsWith('/proxy?url=')) {
