@@ -43,6 +43,10 @@ export default async function handler(req, res) {
       });
 
       res.send(body);
+    } else if (contentType.startsWith('image/') || contentType.startsWith('video/') || contentType.startsWith('audio/')) {
+      const buffer = Buffer.from(await response.arrayBuffer());
+      res.setHeader("Content-Length", buffer.length);
+      res.status(response.status).send(buffer);
     } else {
       const buffer = Buffer.from(await response.arrayBuffer());
       res.setHeader("Content-Length", buffer.length);
