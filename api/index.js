@@ -26,7 +26,7 @@ app.get('/proxy', async (req, res) => {
     });
 
     res.setHeader('Content-Type', response.headers['content-type']);
-    res.status(response.status).send(response.data);
+    res.status(response.status).send(Buffer.from(response.data));
   } catch (error) {
     console.error(error);
     res.status(500).send('Error proxying request');
