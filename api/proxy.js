@@ -43,7 +43,6 @@ export default async function handler(req, res) {
       `);
     }
 
-    const contentType = response.headers.get("content-type") || "";
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
 
