@@ -34,7 +34,7 @@ app.get('/proxy', async (req, res) => {
     if (contentType.includes('text/html')) {
       let htmlContent = response.data.toString('utf-8');
 
-      const injectScript = `
+      const injectScript = 
         <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
         <script>eruda.init();</script>
         <script>
@@ -49,13 +49,6 @@ app.get('/proxy', async (req, res) => {
             let action = form.action;
             if (action && !action.startsWith('/proxy?url=')) {
               form.action = '/proxy?url=' + encodeURIComponent(action);
-            }
-          });
-
-          document.querySelectorAll('img').forEach(img => {
-            let src = img.src;
-            if (src && !src.startsWith('/proxy?url=')) {
-              img.src = '/proxy?url=' + encodeURIComponent(src);
             }
           });
 
@@ -93,23 +86,20 @@ app.get('/proxy', async (req, res) => {
             return originalFetch(input, init);
           };
         </script>
-      `;
+      ;
 
-      htmlContent = htmlContent.replace('</body>', `${injectScript}</body>`);
+      htmlContent = htmlContent.replace('</body>', ${injectScript}</body>);
 
       res.setHeader('Content-Type', 'text/html');
       res.status(response.status).send(htmlContent);
     } else if (contentType.includes('text/css')) {
       let cssContent = response.data.toString('utf-8');
       cssContent = cssContent.replace(/url\(\s*["']?(\/[^"')]+)["']?\s*\)/g, (match, p1) => {
-        return `url("/proxy?url=${encodeURIComponent(targetUrl + p1)}")`;
+        return url("/proxy?url=${encodeURIComponent(targetUrl + p1)}");
       });
 
       res.setHeader('Content-Type', 'text/css');
       res.status(response.status).send(cssContent);
-    } else if (contentType.includes('image/') || contentType.includes('video/')) {
-      res.setHeader('Content-Type', contentType);
-      res.status(response.status).send(Buffer.from(response.data));
     } else {
       res.setHeader('Content-Type', contentType);
       res.status(response.status).send(Buffer.from(response.data));
