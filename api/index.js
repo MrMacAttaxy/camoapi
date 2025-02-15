@@ -16,7 +16,7 @@ app.get('/proxy', async (req, res) => {
     return res.status(400).send('No target URL provided');
   }
 
-  targetUrl = decodeURIComponent(targetUrl); // Decode the initial proxied URL
+  targetUrl = decodeURIComponent(targetUrl); 
 
   try {
     const response = await axios.get(targetUrl, {
@@ -107,9 +107,8 @@ app.get('/proxy', async (req, res) => {
         </script>
       `;
 
-      // Ensure all proxified URLs are decoded automatically
       htmlContent = htmlContent.replace(/(src|href|srcset)="([^"]+)"/g, (match, p1, p2) => {
-        let newUrl = decodeURIComponent(p2); // Decode the proxified URL
+        let newUrl = decodeURIComponent(p2);
         if (newUrl.startsWith('/')) {
           newUrl = targetUrl + newUrl;
         }
