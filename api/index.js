@@ -107,20 +107,21 @@ app.get('/proxy', async (req, res) => {
         </script>
       `;
 
-      htmlContent = htmlContent.replace(/(src|href|srcset)="(\/[^"]+)"/g, (match, p1, p2) => {
+      // Ensure all resources are correctly proxied, maintaining original URL structure
+      htmlContent = htmlContent.replace(/(src|href|srcset)="([^"]+)"/g, (match, p1, p2) => {
         let newUrl = p2;
         if (p2.startsWith('/')) {
           newUrl = targetUrl + p2;
         }
-        return `${p1}="${newUrl}"`;
+        return `${p1}="/proxy?url=${encodeURIComponent(newUrl)}"`;
       });
 
       htmlContent = htmlContent.replace(/url\(\s*["']?(\/[^"')]+)["']?\s*\)/g, (match, p1) => {
-        return `url("${targetUrl + p1}")`;
+        return `url("/proxy?url=${encodeURIComponent(targetUrl + p1)}")`;
       });
 
       htmlContent = htmlContent.replace(/<script src="(\/[^"]+)"/g, (match, p1) => {
-        return `<script src="${targetUrl + p1}"`;
+        return `<script src="/proxy?url=${encodeURIComponent(targetUrl + p1)}"`;
       });
 
       htmlContent = htmlContent.replace('</body>', `${script}</body>`);
@@ -131,7 +132,7 @@ app.get('/proxy', async (req, res) => {
       let cssContent = response.data.toString('utf-8');
 
       cssContent = cssContent.replace(/url\(\s*["']?(\/[^"')]+)["']?\s*\)/g, (match, p1) => {
-        return `url("${targetUrl + p1}")`;
+        return `url("/proxy?url=${encodeURIComponent(targetUrl + p1)}")`;
       });
 
       res.setHeader('Content-Type', 'text/css');
