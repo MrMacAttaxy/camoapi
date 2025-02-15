@@ -1,6 +1,6 @@
 # CamoAPI
 ## What is CamoAPI?
-CamoAPI is one of the fastest proxies for static being updated daily, it makes browsing the web with no restrictions even easier and more fun with our speed
+CamoAPI is one of the fastest proxies for vercel being updated daily, it makes browsing the web with no restrictions even easier and more fun with our speed
 ## Our Speeds
 This depends on your wifi
 <br>
