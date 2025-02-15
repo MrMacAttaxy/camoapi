@@ -58,7 +58,7 @@ export default async function handler(req, res) {
       let body = await response.text();
       const proxyBase = `${url.origin}${url.pathname}?url=`;
 
-      // Replace all URL references in href, src, action, data, poster, background, and inline styles
+      // Replace all URLs for attributes like href, src, action, etc.
       body = body.replace(/(href|src|action|data|poster|background)=(["']?)(https?:\/\/[^"'\s>]+)(["']?)/gi, (_, attr, quote1, link, quote2) => {
         return `${attr}=${quote1}${proxyBase}${encodeURIComponent(link)}${quote2}`;
       });
@@ -67,7 +67,7 @@ export default async function handler(req, res) {
         return `url("${proxyBase}${encodeURIComponent(link)}")`;
       });
 
-      // Inject the proxy script to handle script tag replacements dynamically
+      // Inject the script to handle dynamic script loading and chunked scripts
       const scriptInjection = `
       <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
       <script>eruda.init();</script>
@@ -78,6 +78,18 @@ export default async function handler(req, res) {
             script.setAttribute('src', '/api/proxy?url=' + encodeURIComponent(src));
           }
         });
+        
+        // Re-check for dynamically injected scripts (for chunk loading or async scripts)
+        const originalAppendChild = HTMLElement.prototype.appendChild;
+        HTMLElement.prototype.appendChild = function(child) {
+          if (child.tagName === 'SCRIPT') {
+            const src = child.getAttribute('src');
+            if (src && src.startsWith('http')) {
+              child.setAttribute('src', '/api/proxy?url=' + encodeURIComponent(src));
+            }
+          }
+          return originalAppendChild.call(this, child);
+        };
       </script>
       `;
       body = body.replace('</body>', `${scriptInjection}</body>`);
@@ -96,6 +108,7 @@ export default async function handler(req, res) {
         </html>
       `);
     } else {
+      // For images, video, or other binary files, forward the content directly
       const buffer = Buffer.from(await response.arrayBuffer());
       res.setHeader("Content-Length", buffer.length);
       res.status(response.status).send(buffer);
