@@ -33,7 +33,7 @@ app.all('/proxy', async (req, res) => {
         'Cache-Control': 'no-cache',
       },
       data: method !== 'GET' ? body : undefined,
-      responseType: method === 'POST' ? 'json' : 'arraybuffer',
+      responseType: 'arraybuffer',
     };
 
     const response = await axios(config);
