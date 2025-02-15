@@ -18,6 +18,9 @@ app.get('/proxy', async (req, res) => {
 
   targetUrl = decodeURIComponent(targetUrl);
 
+  // Decode the encoded URL again to handle cases like '%3A' for ':' and '%2F' for '/'
+  targetUrl = targetUrl.replace(/%3A/g, ':').replace(/%2F/g, '/');
+
   try {
     const response = await axios.get(targetUrl, {
       responseType: 'arraybuffer',
@@ -49,6 +52,13 @@ app.get('/proxy', async (req, res) => {
             let action = form.action;
             if (action && !action.startsWith('/proxy?url=')) {
               form.action = '/proxy?url=' + encodeURIComponent(action);
+            }
+          });
+
+          document.querySelectorAll('img').forEach(img => {
+            let src = img.src;
+            if (src && !src.startsWith('/proxy?url=')) {
+              img.src = '/proxy?url=' + encodeURIComponent(src);
             }
           });
 
