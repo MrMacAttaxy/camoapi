@@ -83,16 +83,6 @@ app.get('/proxy', async (req, res) => {
             }
             return originalFetch(input, init);
           };
-
-          const originalCSS = window.CSSStyleSheet.prototype.insertRule;
-          window.CSSStyleSheet.prototype.insertRule = function(rule, index) {
-            if (rule.includes('url(')) {
-              rule = rule.replace(/url\(\s*['"]?(\/[^'")]+)['"]?\s*\)/g, (match, p1) => {
-                return `url("/proxy?url=${encodeURIComponent(targetUrl + p1)}")`;
-              });
-            }
-            return originalCSS.apply(this, arguments);
-          };
         </script>
       `;
 
