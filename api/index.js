@@ -19,6 +19,8 @@ app.get('/proxy', async (req, res) => {
   targetUrl = decodeURIComponent(targetUrl);
   targetUrl = targetUrl.replace(/%3A/g, ':').replace(/%2F/g, '/'); // Decode additional parts if necessary
 
+  console.log(`Proxying request to: ${targetUrl}`);
+
   try {
     const response = await axios.get(targetUrl, {
       responseType: 'arraybuffer',
@@ -31,6 +33,7 @@ app.get('/proxy', async (req, res) => {
     });
 
     const contentType = response.headers['content-type'];
+    console.log(`Content-Type: ${contentType}`);
 
     // If the content is HTML, handle it as before (inject script)
     if (contentType.includes('text/html')) {
@@ -107,7 +110,8 @@ app.get('/proxy', async (req, res) => {
     }
 
   } catch (error) {
-    console.error('Error proxying request:', error);
+    console.error('Error proxying request:', error.message);
+    console.error('Error details:', error.response ? error.response.data : error);
     res.status(500).send('Error proxying request');
   }
 });
