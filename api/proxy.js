@@ -1,9 +1,16 @@
 export default async function handler(req, res) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
 
   const url = new URL(req.url, `https://${req.headers.host}`);
-  const targetUrl = url.searchParams.get("url");
+  const targetUrl = url.searchParams.get('url');
 
   if (!targetUrl || !/^https?:\/\//.test(targetUrl)) {
     return res.status(400).send(`
@@ -24,9 +31,9 @@ export default async function handler(req, res) {
   try {
     const response = await fetch(targetUrl, {
       headers: {
-        "User-Agent": req.headers["user-agent"] || "Mozilla/5.0",
-        "Referer": targetUrl,
-        "Origin": targetUrl,
+        'User-Agent': req.headers['user-agent'] || 'Mozilla/5.0',
+        'Referer': targetUrl,
+        'Origin': targetUrl,
       },
     });
 
@@ -46,10 +53,9 @@ export default async function handler(req, res) {
       `);
     }
 
-    const contentType = response.headers.get("content-type") || "";
-    res.setHeader("Access-Control-Allow-Origin", "*");
+    const contentType = response.headers.get('content-type') || '';
 
-    if (contentType.startsWith("text/html")) {
+    if (contentType.startsWith('text/html')) {
       let body = await response.text();
       const proxyBase = `${url.origin}${url.pathname}?url=`;
 
@@ -64,7 +70,7 @@ export default async function handler(req, res) {
         <script>eruda.init();</script>
       `;
 
-      body = body.replace("</body>", `${script}</body>`);
+      body = body.replace('</body>', `${script}</body>`);
 
       body = body.replace(/(href|src|action)=["'](https?:\/\/[^"'>]+)["']/gi, (_, attr, link) => {
         return `${attr}="${proxyBase}${encodeURIComponent(link)}"`;
@@ -95,15 +101,15 @@ export default async function handler(req, res) {
       });
 
       body = body.replace(/background(-image)?:\s*url\(["']?(https?:\/\/[^"')]+)["']?\)/gi, (_, prop, link) => {
-        return `background${prop ? "-image" : ""}: url("${proxyBase}${encodeURIComponent(link)}")`;
+        return `background${prop ? '-image' : ''}: url("${proxyBase}${encodeURIComponent(link)}")`;
       });
 
-      res.setHeader("Content-Type", contentType);
+      res.setHeader('Content-Type', contentType);
       res.send(body);
     } else {
       const buffer = Buffer.from(await response.arrayBuffer());
-      res.setHeader("Content-Type", contentType);
-      res.setHeader("Content-Length", buffer.length);
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Content-Length', buffer.length);
       res.status(response.status).send(buffer);
     }
   } catch (error) {
