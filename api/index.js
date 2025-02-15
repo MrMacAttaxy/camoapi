@@ -1,6 +1,14 @@
 const axios = require('axios');
+const express = require('express');
+const app = express();
 
-module.exports = async (req, res) => {
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  next();
+});
+
+app.get('/proxy', async (req, res) => {
   const { query } = req;
   const targetUrl = query.url;
 
@@ -23,4 +31,6 @@ module.exports = async (req, res) => {
     console.error(error);
     res.status(500).send('Error proxying request');
   }
-};
+});
+
+module.exports = app;
