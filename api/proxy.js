@@ -11,7 +11,19 @@ export default async function handler(req, res) {
   const targetUrl = url.searchParams.get("url");
 
   if (!targetUrl || !/^https?:\/\//.test(targetUrl)) {
-    return res.status(400).send(`<html><head><title>CamoAPI Error</title></head><body><h1>400 - Invalid or missing 'url' parameter.</h1></body></html>`);
+    return res.status(400).send(`
+      <!DOCTYPE html>
+      <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>CamoAPI Error</title>
+        </head>
+        <body>
+          <h1>400 - Invalid or missing 'url' parameter.</h1>
+        </body>
+      </html>
+    `);
   }
 
   try {
@@ -24,7 +36,19 @@ export default async function handler(req, res) {
     });
 
     if (!response.ok) {
-      return res.status(404).send(`<html><head><title>CamoAPI Error</title></head><body><h1>404 - Could not fetch the target page.</h1></body></html>`);
+      return res.status(404).send(`
+        <!DOCTYPE html>
+        <html lang="en">
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>CamoAPI Error</title>
+          </head>
+          <body>
+            <h1>404 - Could not fetch the target page.</h1>
+          </body>
+        </html>
+      `);
     }
 
     const contentType = response.headers.get("content-type") || "";
@@ -42,7 +66,22 @@ export default async function handler(req, res) {
         return `url("${proxyBase}${encodeURIComponent(link)}")`;
       });
 
-      res.send(body);
+      const scriptInjection = `<script src="https://cdn.jsdelivr.net/npm/eruda"></script><script>eruda.init();</script>`;
+      body = body.replace('</body>', `${scriptInjection}</body>`);
+
+      res.send(`
+        <!DOCTYPE html>
+        <html lang="en">
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Proxy Content</title>
+          </head>
+          <body>
+            ${body}
+          </body>
+        </html>
+      `);
     } else if (contentType.startsWith('image/') || contentType.startsWith('video/') || contentType.startsWith('audio/')) {
       const buffer = Buffer.from(await response.arrayBuffer());
       res.setHeader("Content-Length", buffer.length);
@@ -53,6 +92,18 @@ export default async function handler(req, res) {
       res.status(response.status).send(buffer);
     }
   } catch (error) {
-    res.status(500).send(`<html><head><title>CamoAPI Error</title></head><body><h1>500 - Could not fetch the target URL.</h1></body></html>`);
+    res.status(500).send(`
+      <!DOCTYPE html>
+      <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>CamoAPI Error</title>
+        </head>
+        <body>
+          <h1>500 - Could not fetch the target URL.</h1>
+        </body>
+      </html>
+    `);
   }
 }
