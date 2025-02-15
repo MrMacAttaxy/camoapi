@@ -1,11 +1,6 @@
 const express = require('express');
 const axios = require('axios');
 const app = express();
-const bodyParser = require('body-parser');
-const https = require('https');
-
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
 
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
@@ -13,8 +8,8 @@ app.use((req, res, next) => {
   next();
 });
 
-app.all('/proxy', async (req, res) => {
-  const { query, method, body, headers } = req;
+app.get('/proxy', async (req, res) => {
+  const { query } = req;
   let targetUrl = query.url;
 
   if (!targetUrl) {
@@ -24,26 +19,22 @@ app.all('/proxy', async (req, res) => {
   targetUrl = decodeURIComponent(targetUrl);
 
   try {
-    const config = {
-      method,
-      url: targetUrl,
+    const response = await axios.get(targetUrl, {
+      responseType: 'arraybuffer',
       headers: {
-        ...headers,
         'User-Agent': req.headers['user-agent'],
         'Accept': '*/*',
         'Cache-Control': 'no-cache',
       },
-      data: method !== 'GET' ? body : undefined,
-      responseType: 'arraybuffer',
-    };
-
-    const response = await axios(config);
+      maxRedirects: 10,
+    });
 
     const contentType = response.headers['content-type'];
 
     if (contentType.includes('text/html')) {
       let htmlContent = response.data.toString('utf-8');
-      htmlContent = htmlContent.replace('</body>', `
+
+      const injectScript = `
         <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
         <script>eruda.init();</script>
         <script>
@@ -95,7 +86,9 @@ app.all('/proxy', async (req, res) => {
             return originalFetch(input, init);
           };
         </script>
-      </body>`);
+      `;
+
+      htmlContent = htmlContent.replace('</body>', `${injectScript}</body>`);
 
       res.setHeader('Content-Type', 'text/html');
       res.status(response.status).send(htmlContent);
