@@ -1,6 +1,10 @@
 const express = require('express');
 const axios = require('axios');
 const app = express();
+const bodyParser = require('body-parser');
+
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
 
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
@@ -8,8 +12,8 @@ app.use((req, res, next) => {
   next();
 });
 
-app.get('/proxy', async (req, res) => {
-  const { query } = req;
+app.all('/proxy', async (req, res) => {
+  const { query, method, body, headers } = req;
   let targetUrl = query.url;
 
   if (!targetUrl) {
@@ -19,15 +23,20 @@ app.get('/proxy', async (req, res) => {
   targetUrl = decodeURIComponent(targetUrl);
 
   try {
-    const response = await axios.get(targetUrl, {
-      responseType: 'arraybuffer',
+    const config = {
+      method,
+      url: targetUrl,
       headers: {
+        ...headers,
         'User-Agent': req.headers['user-agent'],
         'Accept': '*/*',
         'Cache-Control': 'no-cache',
       },
-      maxRedirects: 10,
-    });
+      data: method !== 'GET' ? body : undefined,
+      responseType: method === 'POST' ? 'json' : 'arraybuffer',
+    };
+
+    const response = await axios(config);
 
     const contentType = response.headers['content-type'];
 
