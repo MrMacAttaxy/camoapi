@@ -10,11 +10,13 @@ app.use((req, res, next) => {
 
 app.get('/proxy', async (req, res) => {
   const { query } = req;
-  const targetUrl = query.url;
+  let targetUrl = query.url;
 
   if (!targetUrl) {
     return res.status(400).send('No target URL provided');
   }
+
+  targetUrl = decodeURIComponent(targetUrl);
 
   try {
     const response = await axios.get(targetUrl, {
