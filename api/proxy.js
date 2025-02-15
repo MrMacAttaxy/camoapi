@@ -66,7 +66,19 @@ export default async function handler(req, res) {
         return `url("${proxyBase}${encodeURIComponent(link)}")`;
       });
 
-      const scriptInjection = `<script src="https://cdn.jsdelivr.net/npm/eruda"></script><script>eruda.init();</script>`;
+      const scriptInjection = `
+      
+      <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+      <script>eruda.init();</script>
+      document.querySelectorAll('script').forEach(function(script) {
+        const src = script.getAttribute('src');
+        if (src && src.startsWith('http')) {
+          script.setAttribute('src', '/api/proxy?url=' + encodeURIComponent(src));
+        }
+      });
+
+      
+      `;
       body = body.replace('</body>', `${scriptInjection}</body>`);
 
       res.send(`
