@@ -4,11 +4,14 @@ CamoAPI is one of the fastest proxies for static being updated daily, it makes b
 ## Our Speeds
 This depends on your wifi
 <br>
+<br>
 **Google**
 0.3s
 <br>
+<br>
 **Github**
 1.5s
+<br>
 <br>
 **CoolMathGames**
 1.5s
