@@ -34,7 +34,7 @@ app.get('/proxy', async (req, res) => {
     if (contentType.includes('text/html')) {
       let htmlContent = response.data.toString('utf-8');
 
-      const injectScript = 
+      const injectScript = `
         <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
         <script>eruda.init();</script>
         <script>
@@ -86,16 +86,16 @@ app.get('/proxy', async (req, res) => {
             return originalFetch(input, init);
           };
         </script>
-      ;
+      `;
 
-      htmlContent = htmlContent.replace('</body>', ${injectScript}</body>);
+      htmlContent = htmlContent.replace('</body>', `${injectScript}</body>`);
 
       res.setHeader('Content-Type', 'text/html');
       res.status(response.status).send(htmlContent);
     } else if (contentType.includes('text/css')) {
       let cssContent = response.data.toString('utf-8');
       cssContent = cssContent.replace(/url\(\s*["']?(\/[^"')]+)["']?\s*\)/g, (match, p1) => {
-        return url("/proxy?url=${encodeURIComponent(targetUrl + p1)}");
+        return `url("/proxy?url=${encodeURIComponent(targetUrl + p1)}")`;
       });
 
       res.setHeader('Content-Type', 'text/css');
