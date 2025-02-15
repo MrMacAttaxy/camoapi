@@ -21,6 +21,7 @@ This depends on your wifi
 ## How to use
 ## YOU MUST GIVE CREDIT
 To use Camohost you need to copy the /api/ files into your website
-Then go to https://[yourwebsite].[yourwebsite]**/api/proxy?url=https://[url, like google.com, github.com, etc...]**
+Then go to <br> 
+https://[yourwebsite].[yourwebsite]**/api/proxy?url=https://[url, like google.com, github.com, etc...]**
 ## Discord
 If you need help then join https://dsc.gg/camouflage
