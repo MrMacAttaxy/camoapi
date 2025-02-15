@@ -11,35 +11,11 @@ export default async function handler(req, res) {
   const targetUrl = url.searchParams.get("url");
 
   if (!targetUrl || !/^https?:\/\//.test(targetUrl)) {
-    return res.status(400).send(`
-      <!DOCTYPE html>
-      <html lang="en">
-        <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>CamoAPI Error</title>
-        </head>
-        <body>
-          <h1>400 - Invalid or missing 'url' parameter.</h1>
-        </body>
-      </html>
-    `);
+    return res.status(400).send("400 - Invalid URL parameter.");
   }
 
   if (targetUrl.startsWith(url.origin)) {
-    return res.status(400).send(`
-      <!DOCTYPE html>
-      <html lang="en">
-        <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>CamoAPI Error</title>
-        </head>
-        <body>
-          <h1>400 - Cannot proxy to the same domain.</h1>
-        </body>
-      </html>
-    `);
+    return res.status(400).send("400 - Cannot proxy to the same domain.");
   }
 
   try {
@@ -52,19 +28,7 @@ export default async function handler(req, res) {
     });
 
     if (!response.ok) {
-      return res.status(404).send(`
-        <!DOCTYPE html>
-        <html lang="en">
-          <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>CamoAPI Error</title>
-          </head>
-          <body>
-            <h1>404 - Could not fetch the target page.</h1>
-          </body>
-        </html>
-      `);
+      return res.status(response.status).send("404 - Could not fetch the target page.");
     }
 
     const contentType = response.headers.get("content-type") || "";
@@ -83,19 +47,17 @@ export default async function handler(req, res) {
       });
 
       const scriptInjection = `
-      <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
-      <script>eruda.init();</script>
       <script>
-        document.querySelectorAll('script').forEach(function(script) {
-          const src = script.getAttribute('src');
+        document.querySelectorAll('script, img').forEach(el => {
+          const src = el.getAttribute('src');
           if (src && src.startsWith('http')) {
-            script.setAttribute('src', '/api/proxy?url=' + encodeURIComponent(src));
+            el.setAttribute('src', '/api/proxy?url=' + encodeURIComponent(src));
           }
         });
-        
+
         const originalAppendChild = HTMLElement.prototype.appendChild;
         HTMLElement.prototype.appendChild = function(child) {
-          if (child.tagName === 'SCRIPT') {
+          if (child.tagName === 'SCRIPT' || child.tagName === 'IMG') {
             const src = child.getAttribute('src');
             if (src && src.startsWith('http')) {
               child.setAttribute('src', '/api/proxy?url=' + encodeURIComponent(src));
@@ -107,37 +69,14 @@ export default async function handler(req, res) {
       `;
       body = body.replace('</body>', `${scriptInjection}</body>`);
 
-      res.send(`
-        <!DOCTYPE html>
-        <html lang="en">
-          <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Proxy Content</title>
-          </head>
-          <body>
-            ${body}
-          </body>
-        </html>
-      `);
+      res.send(body);
     } else {
+      response.headers.forEach((value, name) => res.setHeader(name, value));
       const buffer = Buffer.from(await response.arrayBuffer());
       res.setHeader("Content-Length", buffer.length);
       res.status(response.status).send(buffer);
     }
   } catch (error) {
-    res.status(500).send(`
-      <!DOCTYPE html>
-      <html lang="en">
-        <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>CamoAPI Error</title>
-        </head>
-        <body>
-          <h1>500 - Could not fetch the target URL.</h1>
-        </body>
-      </html>
-    `);
+    res.status(500).send("500 - Could not fetch the target URL.");
   }
 }
