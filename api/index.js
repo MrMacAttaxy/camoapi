@@ -60,6 +60,38 @@ app.get('/proxy', async (req, res) => {
               }
             });
           });
+
+          // Intercept all anchor tag clicks
+          document.addEventListener('click', function(e) {
+            if (e.target.tagName === 'A') {
+              const link = e.target;
+              let linkHref = link.href;
+
+              if (linkHref && !linkHref.startsWith('/proxy?url=')) {
+                link.href = '/proxy?url=' + encodeURIComponent(linkHref);
+              }
+            }
+          });
+
+          // Handle window.location changes
+          const originalLocation = window.location;
+          Object.defineProperty(window, 'location', {
+            set: function(value) {
+              if (value && !value.startsWith('/proxy?url=')) {
+                value = '/proxy?url=' + encodeURIComponent(value);
+              }
+              originalLocation.assign(value);
+            }
+          });
+
+          // Handle window.open redirects
+          const originalOpen = window.open;
+          window.open = function(url) {
+            if (url && !url.startsWith('/proxy?url=')) {
+              url = '/proxy?url=' + encodeURIComponent(url);
+            }
+            return originalOpen.apply(window, [url]);
+          };
         </script>
       `;
 
