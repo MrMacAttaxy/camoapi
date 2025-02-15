@@ -58,6 +58,7 @@ export default async function handler(req, res) {
       let body = await response.text();
       const proxyBase = `${url.origin}${url.pathname}?url=`;
 
+      // Replace all URL references in href, src, action, data, poster, background, and inline styles
       body = body.replace(/(href|src|action|data|poster|background)=(["']?)(https?:\/\/[^"'\s>]+)(["']?)/gi, (_, attr, quote1, link, quote2) => {
         return `${attr}=${quote1}${proxyBase}${encodeURIComponent(link)}${quote2}`;
       });
@@ -66,18 +67,18 @@ export default async function handler(req, res) {
         return `url("${proxyBase}${encodeURIComponent(link)}")`;
       });
 
+      // Inject the proxy script to handle script tag replacements dynamically
       const scriptInjection = `
-      
       <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
       <script>eruda.init();</script>
-      document.querySelectorAll('script').forEach(function(script) {
-        const src = script.getAttribute('src');
-        if (src && src.startsWith('http')) {
-          script.setAttribute('src', '/api/proxy?url=' + encodeURIComponent(src));
-        }
-      });
-
-      
+      <script>
+        document.querySelectorAll('script').forEach(function(script) {
+          const src = script.getAttribute('src');
+          if (src && src.startsWith('http')) {
+            script.setAttribute('src', '/api/proxy?url=' + encodeURIComponent(src));
+          }
+        });
+      </script>
       `;
       body = body.replace('</body>', `${scriptInjection}</body>`);
 
@@ -94,10 +95,6 @@ export default async function handler(req, res) {
           </body>
         </html>
       `);
-    } else if (contentType.startsWith('image/') || contentType.startsWith('video/') || contentType.startsWith('audio/')) {
-      const buffer = Buffer.from(await response.arrayBuffer());
-      res.setHeader("Content-Length", buffer.length);
-      res.status(response.status).send(buffer);
     } else {
       const buffer = Buffer.from(await response.arrayBuffer());
       res.setHeader("Content-Length", buffer.length);
