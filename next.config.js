@@ -1,20 +1,6 @@
-const nextConfig = {
+module.exports = {
   reactStrictMode: true,
-  experimental: {
-    appDir: true,
-  },
-  async headers() {
-    return [
-      {
-        source: "/api/proxy",
-        headers: [
-          { key: "Access-Control-Allow-Origin", value: "*" },
-          { key: "Access-Control-Allow-Methods", value: "GET, OPTIONS" },
-          { key: "Access-Control-Allow-Headers", value: "Origin, X-Requested-With, Content-Type, Accept" }
-        ]
-      }
-    ];
+  images: {
+    domains: ['your-domain.com']
   }
 };
-
-module.exports = nextConfig;
