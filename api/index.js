@@ -17,9 +17,7 @@ app.get('/proxy', async (req, res) => {
   }
 
   targetUrl = decodeURIComponent(targetUrl);
-
-  // Decode the encoded URL again to handle cases like '%3A' for ':' and '%2F' for '/'
-  targetUrl = targetUrl.replace(/%3A/g, ':').replace(/%2F/g, '/');
+  targetUrl = targetUrl.replace(/%3A/g, ':').replace(/%2F/g, '/'); // Decode additional parts if necessary
 
   try {
     const response = await axios.get(targetUrl, {
@@ -34,9 +32,9 @@ app.get('/proxy', async (req, res) => {
 
     const contentType = response.headers['content-type'];
 
+    // If the content is HTML, handle it as before (inject script)
     if (contentType.includes('text/html')) {
       let htmlContent = response.data.toString('utf-8');
-
       const injectScript = `
         <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
         <script>eruda.init();</script>
@@ -97,19 +95,12 @@ app.get('/proxy', async (req, res) => {
           };
         </script>
       `;
-
       htmlContent = htmlContent.replace('</body>', `${injectScript}</body>`);
 
       res.setHeader('Content-Type', 'text/html');
       res.status(response.status).send(htmlContent);
-    } else if (contentType.includes('text/css')) {
-      let cssContent = response.data.toString('utf-8');
-      cssContent = cssContent.replace(/url\(\s*["']?(\/[^"')]+)["']?\s*\)/g, (match, p1) => {
-        return `url("/proxy?url=${encodeURIComponent(targetUrl + p1)}")`;
-      });
 
-      res.setHeader('Content-Type', 'text/css');
-      res.status(response.status).send(cssContent);
+    // For other types like images, handle them directly and send the response
     } else {
       res.setHeader('Content-Type', contentType);
       res.status(response.status).send(Buffer.from(response.data));
