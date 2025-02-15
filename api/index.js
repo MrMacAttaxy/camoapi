@@ -35,8 +35,6 @@ app.get('/proxy', async (req, res) => {
       let htmlContent = response.data.toString('utf-8');
 
       const injectScript = `
-        <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
-        <script>eruda.init();</script>
         <script>
           document.querySelectorAll('a').forEach(a => {
             let href = a.href;
@@ -84,6 +82,16 @@ app.get('/proxy', async (req, res) => {
               input = '/proxy?url=' + encodeURIComponent(input);
             }
             return originalFetch(input, init);
+          };
+
+          const originalCSS = window.CSSStyleSheet.prototype.insertRule;
+          window.CSSStyleSheet.prototype.insertRule = function(rule, index) {
+            if (rule.includes('url(')) {
+              rule = rule.replace(/url\(\s*['"]?(\/[^'")]+)['"]?\s*\)/g, (match, p1) => {
+                return `url("/proxy?url=${encodeURIComponent(targetUrl + p1)}")`;
+              });
+            }
+            return originalCSS.apply(this, arguments);
           };
         </script>
       `;
