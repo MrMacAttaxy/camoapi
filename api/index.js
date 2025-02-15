@@ -37,21 +37,31 @@ app.get('/proxy', async (req, res) => {
         <script>eruda.init();</script>
       `;
       
-      // Replace all relative URLs for src, srcset, href, and script src
       htmlContent = htmlContent.replace(/(src|href|srcset)="(\/[^"]+)"/g, (match, p1, p2) => {
         return `${p1}="/proxy?url=${encodeURIComponent(targetUrl + p2)}"`;
       });
 
-      // Special case for scripts, rewriting their src
+      htmlContent = htmlContent.replace(/url\(\s*["']?(\/[^"')]+)["']?\s*\)/g, (match, p1) => {
+        return `url("/proxy?url=${encodeURIComponent(targetUrl + p1)}")`;
+      });
+
       htmlContent = htmlContent.replace(/<script src="(\/[^"]+)"/g, (match, p1) => {
         return `<script src="/proxy?url=${encodeURIComponent(targetUrl + p1)}"`;
       });
 
-      // Inject the script at the end of the body
       htmlContent = htmlContent.replace('</body>', `${script}</body>`);
 
       res.setHeader('Content-Type', 'text/html');
       res.status(response.status).send(htmlContent);
+    } else if (contentType.includes('text/css')) {
+      let cssContent = response.data.toString('utf-8');
+
+      cssContent = cssContent.replace(/url\(\s*["']?(\/[^"')]+)["']?\s*\)/g, (match, p1) => {
+        return `url("/proxy?url=${encodeURIComponent(targetUrl + p1)}")`;
+      });
+
+      res.setHeader('Content-Type', 'text/css');
+      res.status(response.status).send(cssContent);
     } else {
       res.setHeader('Content-Type', contentType);
       res.status(response.status).send(Buffer.from(response.data));
