@@ -104,6 +104,23 @@ app.get('/proxy', async (req, res) => {
               }
             });
           });
+
+          // Intercept AJAX requests (XMLHttpRequest and Fetch API)
+          const open = XMLHttpRequest.prototype.open;
+          XMLHttpRequest.prototype.open = function(method, url) {
+            if (url && !url.startsWith('/proxy?url=')) {
+              url = '/proxy?url=' + encodeURIComponent(url);
+            }
+            open.apply(this, arguments);
+          };
+
+          const originalFetch = window.fetch;
+          window.fetch = function(input, init) {
+            if (typeof input === 'string' && input && !input.startsWith('/proxy?url=')) {
+              input = '/proxy?url=' + encodeURIComponent(input);
+            }
+            return originalFetch(input, init);
+          };
         </script>
       `;
 
