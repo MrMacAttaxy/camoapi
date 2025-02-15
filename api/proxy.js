@@ -44,11 +44,8 @@ export default async function handler(req, res) {
     }
 
     const contentType = response.headers.get("content-type") || "";
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
-    next(); 
 
     if (contentType.startsWith("text/html")) {
       let body = await response.text();
