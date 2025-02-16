@@ -47,12 +47,12 @@ app.get('/proxy', async (req, res) => {
         return `${p1}="/proxy?url=${encodeURIComponent(newUrl)}"`;
       });
 
-      htmlContent = htmlContent.replace(/(<video[^>]*\s)(src|poster)="([^"<>]+)"/g, (match, tag, attr, url) => {
+      htmlContent = htmlContent.replace(/<video([^>]*)poster="([^"<>]+)"/g, (match, attributes, url) => {
         let newUrl = decodeURIComponent(url);
         if (newUrl.startsWith('/')) {
           newUrl = new URL(newUrl, targetUrl).href;
         }
-        return `${tag}${attr}="/proxy?url=${encodeURIComponent(newUrl)}"`;
+        return `<video${attributes}poster="/proxy?url=${encodeURIComponent(newUrl)}"`;
       });
 
       htmlContent = htmlContent.replace('</body>', `${script}</body>`);
