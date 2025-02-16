@@ -5,15 +5,13 @@ const app = express();
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
   next();
 });
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-app.all('/proxy', async (req, res) => {
-  let targetUrl = req.query.url;
+app.get('/proxy', async (req, res) => {
+  const { query } = req;
+  let targetUrl = query.url;
 
   if (!targetUrl) {
     return res.status(400).send('No target URL provided');
@@ -22,21 +20,16 @@ app.all('/proxy', async (req, res) => {
   targetUrl = decodeURIComponent(targetUrl);
 
   try {
-    const options = {
-      method: req.method,
-      url: targetUrl,
+    const response = await axios.get(targetUrl, {
+      responseType: 'arraybuffer',
       headers: {
         'User-Agent': req.headers['user-agent'],
         'Accept': '*/*',
         'Cache-Control': 'no-cache',
-        ...req.headers,
       },
-      data: req.body,
       maxRedirects: 10,
-      responseType: 'arraybuffer',
-    };
+    });
 
-    const response = await axios(options);
     const contentType = response.headers['content-type'];
 
     if (contentType.includes('text/html')) {
@@ -55,6 +48,7 @@ app.all('/proxy', async (req, res) => {
       });
 
       htmlContent = htmlContent.replace('</body>', `${script}</body>`);
+
       res.setHeader('Content-Type', 'text/html');
       res.status(response.status).send(htmlContent);
     } else if (contentType.includes('text/css')) {
@@ -62,6 +56,7 @@ app.all('/proxy', async (req, res) => {
       cssContent = cssContent.replace(/url\(\s*["']?(\/[^"')]+)["']?\s*\)/g, (match, p1) => {
         return `url("/proxy?url=${encodeURIComponent(new URL(p1, targetUrl).href)}")`;
       });
+
       res.setHeader('Content-Type', 'text/css');
       res.status(response.status).send(cssContent);
     } else if (contentType.includes('application/javascript') || contentType.includes('text/javascript')) {
