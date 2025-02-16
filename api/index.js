@@ -39,17 +39,17 @@ app.get('/proxy', async (req, res) => {
         <script>eruda.init();</script>
       `;
 
-      htmlContent = htmlContent.replace(/(src|href|srcset|poster|data-src|data-poster)="([^"<>]+)"/g, (match, p1, p2) => {
-        let newUrl = decodeURIComponent(p2);
-        if (newUrl.startsWith('/')) {
+      htmlContent = htmlContent.replace(/(src|href|srcset|poster|data-src|data-poster)="([^"<>]+)"/g, (match, attr, url) => {
+        let newUrl = url;
+        if (newUrl.startsWith('/') || !newUrl.startsWith('http')) {
           newUrl = new URL(newUrl, targetUrl).href;
         }
-        return `${p1}="/proxy?url=${encodeURIComponent(newUrl)}"`;
+        return `${attr}="/proxy?url=${encodeURIComponent(newUrl)}"`;
       });
 
-      htmlContent = htmlContent.replace(/<video([^>]*)poster="([^"<>]+)"/g, (match, attributes, url) => {
-        let newUrl = decodeURIComponent(url);
-        if (newUrl.startsWith('/')) {
+      htmlContent = htmlContent.replace(/<video([^>]*)poster=['"]([^'"]+)['"]/gi, (match, attributes, url) => {
+        let newUrl = url;
+        if (newUrl.startsWith('/') || !newUrl.startsWith('http')) {
           newUrl = new URL(newUrl, targetUrl).href;
         }
         return `<video${attributes}poster="/proxy?url=${encodeURIComponent(newUrl)}"`;
@@ -61,8 +61,12 @@ app.get('/proxy', async (req, res) => {
       res.status(response.status).send(htmlContent);
     } else if (contentType.includes('text/css')) {
       let cssContent = response.data.toString('utf-8');
-      cssContent = cssContent.replace(/url\(\s*["']?(\/[^"')]+)["']?\s*\)/g, (match, p1) => {
-        return `url("/proxy?url=${encodeURIComponent(new URL(p1, targetUrl).href)}")`;
+      cssContent = cssContent.replace(/url\(\s*["']?(\/?[^"')]+)["']?\s*\)/g, (match, url) => {
+        let newUrl = url;
+        if (newUrl.startsWith('/') || !newUrl.startsWith('http')) {
+          newUrl = new URL(newUrl, targetUrl).href;
+        }
+        return `url("/proxy?url=${encodeURIComponent(newUrl)}")`;
       });
 
       res.setHeader('Content-Type', 'text/css');
