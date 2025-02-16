@@ -39,20 +39,22 @@ app.get('/proxy', async (req, res) => {
         <script>eruda.init();</script>
       `;
 
-      htmlContent = htmlContent.replace(/(src|href|srcset|poster|data-src|data-poster)="([^"<>]+)"/g, (match, attr, url) => {
+      // Match every attribute that could contain a URL
+      htmlContent = htmlContent.replace(/(\b(?:src|href|poster|srcset|data-src|data-poster|action|formaction|content|profile|cite|icon|longdesc|usemap|manifest|ping)=")([^"<>]+)/gi, (match, attr, url) => {
         let newUrl = url;
         if (newUrl.startsWith('/') || !newUrl.startsWith('http')) {
           newUrl = new URL(newUrl, targetUrl).href;
         }
-        return `${attr}="/proxy?url=${encodeURIComponent(newUrl)}"`;
+        return `${attr}/proxy?url=${encodeURIComponent(newUrl)}"`;
       });
 
-      htmlContent = htmlContent.replace(/<video([^>]*)poster=['"]([^'"]+)['"]/gi, (match, attributes, url) => {
+      // Ensure URLs inside inline CSS (style attributes) are proxified
+      htmlContent = htmlContent.replace(/style="([^"]*url\(['"]?)([^"')]+)(['"]?\))/gi, (match, prefix, url, suffix) => {
         let newUrl = url;
         if (newUrl.startsWith('/') || !newUrl.startsWith('http')) {
           newUrl = new URL(newUrl, targetUrl).href;
         }
-        return `<video${attributes}poster="/proxy?url=${encodeURIComponent(newUrl)}"`;
+        return `style="${prefix}/proxy?url=${encodeURIComponent(newUrl)}${suffix}`;
       });
 
       htmlContent = htmlContent.replace('</body>', `${script}</body>`);
