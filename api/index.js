@@ -39,12 +39,20 @@ app.get('/proxy', async (req, res) => {
         <script>eruda.init();</script>
       `;
 
-      htmlContent = htmlContent.replace(/(src|href|srcset)="([^"<>]+)"/g, (match, p1, p2) => {
+      htmlContent = htmlContent.replace(/(src|href|srcset|poster|data-src|data-poster)="([^"<>]+)"/g, (match, p1, p2) => {
         let newUrl = decodeURIComponent(p2);
         if (newUrl.startsWith('/')) {
           newUrl = new URL(newUrl, targetUrl).href;
         }
         return `${p1}="/proxy?url=${encodeURIComponent(newUrl)}"`;
+      });
+
+      htmlContent = htmlContent.replace(/(<video[^>]*\s)(src|poster)="([^"<>]+)"/g, (match, tag, attr, url) => {
+        let newUrl = decodeURIComponent(url);
+        if (newUrl.startsWith('/')) {
+          newUrl = new URL(newUrl, targetUrl).href;
+        }
+        return `${tag}${attr}="/proxy?url=${encodeURIComponent(newUrl)}"`;
       });
 
       htmlContent = htmlContent.replace('</body>', `${script}</body>`);
