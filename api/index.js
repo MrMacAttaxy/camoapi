@@ -39,12 +39,12 @@ app.get('/proxy', async (req, res) => {
         <script>eruda.init();</script>
       `;
 
-      htmlContent = htmlContent.replace(/(src|href|srcset)="([^"]+)"/g, (match, p1, p2) => {
+      htmlContent = htmlContent.replace(/(src|href|srcset)="([^"<>]+)"/g, (match, p1, p2) => {
         let newUrl = decodeURIComponent(p2);
         if (newUrl.startsWith('/')) {
           newUrl = targetUrl + newUrl;
         }
-        return `${p1}="/proxy?url=${encodeURIComponent(newUrl)}"`;
+        return `${p1}="/proxy?url=${newUrl}"`;
       });
 
       htmlContent = htmlContent.replace('</body>', `${script}</body>`);
@@ -54,7 +54,7 @@ app.get('/proxy', async (req, res) => {
     } else if (contentType.includes('text/css')) {
       let cssContent = response.data.toString('utf-8');
       cssContent = cssContent.replace(/url\(\s*["']?(\/[^"')]+)["']?\s*\)/g, (match, p1) => {
-        return `url("/proxy?url=${encodeURIComponent(targetUrl + decodeURIComponent(p1))}")`;
+        return `url("/proxy?url=${targetUrl + p1}")`;
       });
 
       res.setHeader('Content-Type', 'text/css');
