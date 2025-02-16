@@ -6,6 +6,7 @@ app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
   res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.header('Content-Security-Policy', "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:;");
   next();
 });
 
@@ -37,24 +38,39 @@ app.get('/proxy', async (req, res) => {
       const script = `
         <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
         <script>eruda.init();</script>
+        <script>
+          (function() {
+            const originalFetch = window.fetch;
+            window.fetch = function(url, options) {
+              if (!url.startsWith('/proxy?url=') && !url.startsWith('blob:')) {
+                url = "/proxy?url=" + encodeURIComponent(new URL(url, location.href).href);
+              }
+              return originalFetch.call(this, url, options);
+            };
+
+            const originalXHROpen = XMLHttpRequest.prototype.open;
+            XMLHttpRequest.prototype.open = function(method, url, async, user, password) {
+              if (!url.startsWith('/proxy?url=') && !url.startsWith('blob:')) {
+                url = "/proxy?url=" + encodeURIComponent(new URL(url, location.href).href);
+              }
+              return originalXHROpen.apply(this, arguments);
+            };
+          })();
+        </script>
       `;
 
-      // Match every attribute that could contain a URL
       htmlContent = htmlContent.replace(/(\b(?:src|href|poster|srcset|data-src|data-poster|action|formaction|content|profile|cite|icon|longdesc|usemap|manifest|ping)=")([^"<>]+)/gi, (match, attr, url) => {
         let newUrl = url;
         if (newUrl.startsWith('/') || !newUrl.startsWith('http')) {
           newUrl = new URL(newUrl, targetUrl).href;
         }
-        return `${attr}/proxy?url=${encodeURIComponent(newUrl)}"`;
+        return `${attr}"/proxy?url=${encodeURIComponent(newUrl)}"`;
       });
 
-      // Ensure URLs inside inline CSS (style attributes) are proxified
-      htmlContent = htmlContent.replace(/style="([^"]*url\(['"]?)([^"')]+)(['"]?\))/gi, (match, prefix, url, suffix) => {
-        let newUrl = url;
-        if (newUrl.startsWith('/') || !newUrl.startsWith('http')) {
-          newUrl = new URL(newUrl, targetUrl).href;
-        }
-        return `style="${prefix}/proxy?url=${encodeURIComponent(newUrl)}${suffix}`;
+      htmlContent = htmlContent.replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gi, (match, scriptContent) => {
+        return `<script>/* Proxified Script */\n${scriptContent.replace(/(fetch\(['"]?)(https?:\/\/[^'")]+)/gi, (m, prefix, url) => {
+          return `${prefix}/proxy?url=${encodeURIComponent(url)}`;
+        })}</script>`;
       });
 
       htmlContent = htmlContent.replace('</body>', `${script}</body>`);
@@ -74,8 +90,13 @@ app.get('/proxy', async (req, res) => {
       res.setHeader('Content-Type', 'text/css');
       res.status(response.status).send(cssContent);
     } else if (contentType.includes('application/javascript') || contentType.includes('text/javascript')) {
+      let jsContent = response.data.toString('utf-8');
+      jsContent = jsContent.replace(/(fetch\(['"]?)(https?:\/\/[^'")]+)/gi, (match, prefix, url) => {
+        return `${prefix}/proxy?url=${encodeURIComponent(url)}`;
+      });
+
       res.setHeader('Content-Type', 'application/javascript');
-      res.status(response.status).send(Buffer.from(response.data));
+      res.status(response.status).send(jsContent);
     } else {
       res.setHeader('Content-Type', contentType);
       res.status(response.status).send(Buffer.from(response.data));
