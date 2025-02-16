@@ -42,9 +42,9 @@ app.get('/proxy', async (req, res) => {
       htmlContent = htmlContent.replace(/(src|href|srcset)="([^"<>]+)"/g, (match, p1, p2) => {
         let newUrl = decodeURIComponent(p2);
         if (newUrl.startsWith('/')) {
-          newUrl = targetUrl + newUrl;
+          newUrl = new URL(newUrl, targetUrl).href;
         }
-        return `${p1}="/proxy?url=${newUrl}"`;
+        return `${p1}="/proxy?url=${encodeURIComponent(newUrl)}"`;
       });
 
       htmlContent = htmlContent.replace('</body>', `${script}</body>`);
@@ -54,7 +54,7 @@ app.get('/proxy', async (req, res) => {
     } else if (contentType.includes('text/css')) {
       let cssContent = response.data.toString('utf-8');
       cssContent = cssContent.replace(/url\(\s*["']?(\/[^"')]+)["']?\s*\)/g, (match, p1) => {
-        return `url("/proxy?url=${targetUrl + p1}")`;
+        return `url("/proxy?url=${encodeURIComponent(new URL(p1, targetUrl).href)}")`;
       });
 
       res.setHeader('Content-Type', 'text/css');
