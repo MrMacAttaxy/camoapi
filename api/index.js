@@ -16,7 +16,7 @@ app.get('/proxy', async (req, res) => {
     return res.status(400).send('No target URL provided');
   }
 
-  targetUrl = decodeURIComponent(targetUrl); 
+  targetUrl = decodeURIComponent(targetUrl);
 
   try {
     const response = await axios.get(targetUrl, {
@@ -40,87 +40,28 @@ app.get('/proxy', async (req, res) => {
         <script>
           document.addEventListener('submit', function(e) {
             let form = e.target;
-            if (form && form.action) {
-              let originalAction = form.action;
-              if (originalAction && !originalAction.startsWith('/proxy?url=')) {
-                form.action = '/proxy?url=' + encodeURIComponent(originalAction);
-              }
+            if (form && form.action && !form.action.startsWith('/proxy?url=')) {
+              form.action = '/proxy?url=' + encodeURIComponent(form.action);
             }
-          });
-
-          const inputs = document.querySelectorAll('input[type="search"], input[type="text"]');
-          inputs.forEach(input => {
-            input.addEventListener('keydown', function(e) {
-              if (e.key === 'Enter' && input.form) {
-                let form = input.form;
-                let originalAction = form.action;
-                if (originalAction && !originalAction.startsWith('/proxy?url=')) {
-                  form.action = '/proxy?url=' + encodeURIComponent(originalAction);
-                }
-              }
-            });
           });
 
           document.addEventListener('click', function(e) {
             if (e.target.tagName === 'A') {
-              const link = e.target;
-              let linkHref = link.href;
-              if (linkHref && !linkHref.startsWith('/proxy?url=')) {
-                link.href = '/proxy?url=' + encodeURIComponent(linkHref);
+              let link = e.target;
+              if (link.href && !link.href.startsWith('/proxy?url=')) {
+                link.href = '/proxy?url=' + encodeURIComponent(link.href);
               }
             }
-          });
-
-          const originalLocation = window.location;
-          Object.defineProperty(window, 'location', {
-            set: function(value) {
-              if (value && !value.startsWith('/proxy?url=')) {
-                value = '/proxy?url=' + encodeURIComponent(value);
-              }
-              originalLocation.assign(value);
-            }
-          });
-
-          const originalOpen = window.open;
-          window.open = function(url) {
-            if (url && !url.startsWith('/proxy?url=')) {
-              url = '/proxy?url=' + encodeURIComponent(url);
-            }
-            return originalOpen.apply(window, [url]);
-          };
-
-          document.addEventListener('DOMContentLoaded', function() {
-            const metaTags = document.getElementsByTagName('meta');
-            Array.from(metaTags).forEach(tag => {
-              if (tag.getAttribute('http-equiv') === 'refresh') {
-                let content = tag.getAttribute('content');
-                const match = content && content.match(/url=([^;]+)/);
-                if (match && match[1]) {
-                  let newUrl = match[1];
-                  if (newUrl && !newUrl.startsWith('/proxy?url=')) {
-                    tag.setAttribute('content', 'url=/proxy?url=' + encodeURIComponent(newUrl));
-                  }
-                }
-              }
-            });
           });
         </script>
       `;
 
-      htmlContent = htmlContent.replace(/(src|href|srcset)="([^"]+)"/g, (match, p1, p2) => {
+      htmlContent = htmlContent.replace(/(src|href|srcset)="([^\"]+)"/g, (match, p1, p2) => {
         let newUrl = decodeURIComponent(p2);
         if (newUrl.startsWith('/')) {
           newUrl = targetUrl + newUrl;
         }
         return `${p1}="/proxy?url=${encodeURIComponent(newUrl)}"`;
-      });
-
-      htmlContent = htmlContent.replace(/url\(\s*["']?(\/[^"')]+)["']?\s*\)/g, (match, p1) => {
-        return `url("/proxy?url=${encodeURIComponent(targetUrl + decodeURIComponent(p1))}")`;
-      });
-
-      htmlContent = htmlContent.replace(/<script src="(\/[^"]+)"/g, (match, p1) => {
-        return `<script src="/proxy?url=${encodeURIComponent(targetUrl + decodeURIComponent(p1))}"`;
       });
 
       htmlContent = htmlContent.replace('</body>', `${script}</body>`);
@@ -136,13 +77,20 @@ app.get('/proxy', async (req, res) => {
 
       res.setHeader('Content-Type', 'text/css');
       res.status(response.status).send(cssContent);
+    } else if (contentType.includes('application/javascript') || contentType.includes('text/javascript')) {
+      let jsContent = response.data.toString('utf-8');
+
+      jsContent = jsContent.replace(/(['"])(\/[^'"]+)\1/g, (match, quote, p1) => {
+        return `${quote}/proxy?url=${encodeURIComponent(targetUrl + decodeURIComponent(p1))}${quote}`;
+      });
+
+      res.setHeader('Content-Type', 'application/javascript');
+      res.status(response.status).send(jsContent);
     } else {
       res.setHeader('Content-Type', contentType);
       res.status(response.status).send(Buffer.from(response.data));
     }
-
   } catch (error) {
-    console.error('Error proxying request:', error);
     res.status(500).send('Error proxying request');
   }
 });
