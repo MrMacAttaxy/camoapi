@@ -41,12 +41,12 @@ app.get('/proxy', async (req, res) => {
 
       htmlContent = htmlContent.replace(/(\b(?:src|href|poster|srcset|data-src|data-poster|action|formaction|content|profile|cite|icon|longdesc|usemap|manifest|ping)=\"|\')(?!https?:\/\/|\/proxy\?url=)([^"<>]+)(\"|\')/gi, (match, attr, url, quote) => {
         let newUrl = new URL(url, targetUrl).href;
-        return `${attr}/proxy?url=${encodeURIComponent(newUrl)}${quote}`;
+        return `${attr}/proxy?url=${newUrl}${quote}`;
       });
 
       htmlContent = htmlContent.replace(/style=["']([^"']*url\(['"]?)(?!https?:\/\/|\/proxy\?url=)([^"')]+)(['"]?\))/gi, (match, prefix, url, suffix) => {
         let newUrl = new URL(url, targetUrl).href;
-        return `style="${prefix}/proxy?url=${encodeURIComponent(newUrl)}${suffix}`;
+        return `style="${prefix}/proxy?url=${newUrl}${suffix}`;
       });
 
       htmlContent = htmlContent.replace('</body>', `${script}</body>`);
@@ -57,7 +57,7 @@ app.get('/proxy', async (req, res) => {
       let cssContent = response.data.toString('utf-8');
       cssContent = cssContent.replace(/url\(\s*["']?(?!https?:\/\/|\/proxy\?url=)(\/[^"')]+)["']?\s*\)/g, (match, url) => {
         let newUrl = new URL(url, targetUrl).href;
-        return `url("/proxy?url=${encodeURIComponent(newUrl)}")`;
+        return `url("/proxy?url=${newUrl}")`;
       });
 
       res.setHeader('Content-Type', 'text/css');
