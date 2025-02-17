@@ -39,15 +39,15 @@ app.get('/proxy', async (req, res) => {
         <script>eruda.init();</script>
       `;
 
-      htmlContent = htmlContent.replace(/(\b(?:src|href|poster|srcset|data-src|data-poster|action|formaction|content|profile|cite|icon|longdesc|usemap|manifest|ping)="([^"<>]+))"/gi, (match, attr, url) => {
+      htmlContent = htmlContent.replace(/(\b(?:src|href|poster|srcset|data-src|data-poster|action|formaction|content|profile|cite|icon|longdesc|usemap|manifest|ping)=["'])([^"<>]+)(["'])/gi, (match, attr, url, quote) => {
         let newUrl = url;
         if (newUrl.startsWith('/') || !newUrl.startsWith('http')) {
           newUrl = new URL(newUrl, targetUrl).href;
         }
-        return `${attr}/proxy?url=${newUrl}"`;
+        return `${attr}/proxy?url=${newUrl}${quote}`;
       });
 
-      htmlContent = htmlContent.replace(/style="([^"]*url\(['"]?)([^"')]+)(['"]?\))/gi, (match, prefix, url, suffix) => {
+      htmlContent = htmlContent.replace(/style=["']([^"']*url\(['"]?)([^"')]+)(['"]?\))/gi, (match, prefix, url, suffix) => {
         let newUrl = url;
         if (newUrl.startsWith('/') || !newUrl.startsWith('http')) {
           newUrl = new URL(newUrl, targetUrl).href;
