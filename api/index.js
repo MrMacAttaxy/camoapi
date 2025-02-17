@@ -1,7 +1,7 @@
 const express = require('express');
 const axios = require('axios');
 const app = express();
-
+// Apparently makes all images work (I don't think it does)
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
@@ -15,6 +15,7 @@ app.get('/proxy', async (req, res) => {
 
   if (!targetUrl) {
     return res.status(400).send('No target URL provided');
+    // no url error thingy
   }
 
   targetUrl = decodeURIComponent(targetUrl);
@@ -34,12 +35,13 @@ app.get('/proxy', async (req, res) => {
 
     if (contentType.includes('text/html')) {
       let htmlContent = response.data.toString('utf-8');
+      // Script to inject into the proxy page
       const script = `
         <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
         <script>eruda.init();</script>
       `;
 
-      // Match every attribute that could contain a URL
+      // does everything for src="" srcset="" and shit like  that
       htmlContent = htmlContent.replace(/(\b(?:src|href|poster|srcset|data-src|data-poster|action|formaction|content|profile|cite|icon|longdesc|usemap|manifest|ping)=")([^"<>]+)/gi, (match, attr, url) => {
         let newUrl = url;
         if (newUrl.startsWith('/') || !newUrl.startsWith('http')) {
@@ -48,7 +50,7 @@ app.get('/proxy', async (req, res) => {
         return `${attr}/proxy?url=${encodeURIComponent(newUrl)}"`;
       });
 
-      // Ensure URLs inside inline CSS (style attributes) are proxified
+      // links in css are proxified with this shitty code
       htmlContent = htmlContent.replace(/style="([^"]*url\(['"]?)([^"')]+)(['"]?\))/gi, (match, prefix, url, suffix) => {
         let newUrl = url;
         if (newUrl.startsWith('/') || !newUrl.startsWith('http')) {
@@ -56,7 +58,7 @@ app.get('/proxy', async (req, res) => {
         }
         return `style="${prefix}/proxy?url=${encodeURIComponent(newUrl)}${suffix}`;
       });
-
+      // injects the javascript from above (dont ask why its so unoganized)
       htmlContent = htmlContent.replace('</body>', `${script}</body>`);
 
       res.setHeader('Content-Type', 'text/html');
@@ -82,6 +84,7 @@ app.get('/proxy', async (req, res) => {
     }
   } catch (error) {
     res.status(500).send('Error proxying request');
+    // error thingy for not being able to fuckin proxy shit
   }
 });
 
