@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Static Proxy</title>
+</head>
+<body>
+    <h1>Static Proxy</h1>
+    <input type="text" id="urlInput" placeholder="Enter URL">
+    <button onclick="startProxy()">Go</button>
+    <iframe id="proxyFrame" style="width:100%; height:90vh; border:none;"></iframe>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js');
+        }
+
+        function startProxy() {
+            let url = document.getElementById("urlInput").value;
+            let proxyUrl = `/proxy/${btoa(url)}`;
+            document.getElementById("proxyFrame").src = proxyUrl;
+        }
+    </script>
+</body>
+</html>
