@@ -17,11 +17,11 @@ This depends on your wifi
 1.5s
 <br>
 ## Why Use CamoAPI
-**CamoAPI** is one of the **easiest and fastest** static proxies you can use, it has **inspect** capabilities unblocked for **all** users, and it is being updated **daily**.
+**CamoAPI** is one of the **easiest and fastest** vercel proxies you can use, it has **inspect** capabilities unblocked for **all** users, and it is being updated **daily**.
 ## How to use
 ## YOU MUST GIVE CREDIT
-To use Camohost you need to copy the /api/ files into your website
+To use Camoapi you need to copy the /api/index.js file into your website and copy the vercel.json and package.json into your the root directory.
 Then go to <br> 
-https://[yourwebsite].[yourwebsite]**/api/proxy?url=https://[url, like google.com, github.com, etc...]**
+https://[yourwebsite].[yourwebsite]**/proxy?url=https://[url, like google.com, github.com, etc...]**
 ## Discord
 If you need help then join https://dsc.gg/camouflage
