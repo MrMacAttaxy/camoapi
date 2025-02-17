@@ -1,6 +1,6 @@
 {
-  "name": "express-proxy",
-  "version": "1.0.0",
+  "name": "camoapi",
+  "version": "1.0.2",
   "main": "api/index.js",
   "dependencies": {
     "axios": "^1.2.0",
