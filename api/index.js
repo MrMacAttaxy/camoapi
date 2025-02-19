@@ -1,5 +1,7 @@
 const express = require('express');
 const axios = require('axios');
+const request = require('request');
+
 const app = express();
 
 app.use((req, res, next) => {
@@ -25,12 +27,12 @@ app.get('/proxy', async (req, res) => {
       headers: {
         'User-Agent': req.headers['user-agent'],
         'Accept': '*/*',
-        'Cache-Control': 'no-cache',
+        'Cache-Control': 'public, max-age=31536000',
       },
       maxRedirects: 10,
     });
 
-    const contentType = response.headers['content-type'];
+    const contentType = response.headers['content-type']?.toLowerCase() || '';
 
     if (contentType.includes('text/html')) {
       let htmlContent = response.data.toString('utf-8');
