@@ -1,6 +1,5 @@
 const express = require('express');
-const axios = require('axios');
-const request = require('request');
+const fetch = require('node-fetch');
 
 const app = express();
 
@@ -12,30 +11,24 @@ app.use((req, res, next) => {
 });
 
 app.get('/proxy', async (req, res) => {
-  const { query } = req;
-  let targetUrl = query.url;
-
-  if (!targetUrl) {
-    return res.status(400).send('No target URL provided');
-  }
+  let targetUrl = req.query.url;
+  if (!targetUrl) return res.status(400).send('No target URL provided');
 
   targetUrl = decodeURIComponent(targetUrl);
 
   try {
-    const response = await axios.get(targetUrl, {
-      responseType: 'arraybuffer',
+    const response = await fetch(targetUrl, {
       headers: {
         'User-Agent': req.headers['user-agent'],
         'Accept': '*/*',
         'Cache-Control': 'public, max-age=31536000',
-      },
-      maxRedirects: 10,
+      }
     });
 
-    const contentType = response.headers['content-type']?.toLowerCase() || '';
+    const contentType = response.headers.get('content-type');
 
     if (contentType.includes('text/html')) {
-      let htmlContent = response.data.toString('utf-8');
+      let htmlContent = await response.text();
       const script = `
         <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
         <script>eruda.init();</script>
@@ -55,21 +48,10 @@ app.get('/proxy', async (req, res) => {
 
       res.setHeader('Content-Type', 'text/html');
       res.status(response.status).send(htmlContent);
-    } else if (contentType.includes('text/css')) {
-      let cssContent = response.data.toString('utf-8');
-      cssContent = cssContent.replace(/url\(\s*["']?(?!https?:\/\/|\/proxy\?url=)(\/[^"')]+)["']?\s*\)/g, (match, url) => {
-        let newUrl = new URL(url, targetUrl).href;
-        return `url("/proxy?url=${newUrl}")`;
-      });
-
-      res.setHeader('Content-Type', 'text/css');
-      res.status(response.status).send(cssContent);
-    } else if (contentType.includes('application/javascript') || contentType.includes('text/javascript')) {
-      res.setHeader('Content-Type', 'application/javascript');
-      res.status(response.status).send(Buffer.from(response.data));
     } else {
       res.setHeader('Content-Type', contentType);
-      res.status(response.status).send(Buffer.from(response.data));
+      res.status(response.status);
+      response.body.pipe(res);
     }
   } catch (error) {
     res.status(500).send('Error proxying request');
