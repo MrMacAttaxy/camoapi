@@ -34,22 +34,22 @@ app.get('/proxy', async (req, res) => {
 
     if (contentType.includes('text/html')) {
       let htmlContent = response.data.toString('utf-8');
-      const script = 
+      const script = `
         <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
         <script>eruda.init();</script>
-      ;
+      `;
 
       htmlContent = htmlContent.replace(/(\b(?:src|href|poster|srcset|data-src|data-poster|action|formaction|content|profile|cite|icon|longdesc|usemap|manifest|ping)=\"|\')(?!https?:\/\/|\/proxy\?url=)([^"<>]+)(\"|\')/gi, (match, attr, url, quote) => {
         let newUrl = new URL(url, targetUrl).href;
-        return ${attr}/proxy?url=${newUrl}${quote};
+        return `${attr}/proxy?url=${newUrl}${quote}`;
       });
 
       htmlContent = htmlContent.replace(/style=["']([^"']*url\(['"]?)(?!https?:\/\/|\/proxy\?url=)([^"')]+)(['"]?\))/gi, (match, prefix, url, suffix) => {
         let newUrl = new URL(url, targetUrl).href;
-        return style="${prefix}/proxy?url=${newUrl}${suffix};
+        return `style="${prefix}/proxy?url=${newUrl}${suffix}`;
       });
 
-      htmlContent = htmlContent.replace('</body>', ${script}</body>);
+      htmlContent = htmlContent.replace('</body>', `${script}</body>`);
 
       res.setHeader('Content-Type', 'text/html');
       res.status(response.status).send(htmlContent);
@@ -57,7 +57,7 @@ app.get('/proxy', async (req, res) => {
       let cssContent = response.data.toString('utf-8');
       cssContent = cssContent.replace(/url\(\s*["']?(?!https?:\/\/|\/proxy\?url=)(\/[^"')]+)["']?\s*\)/g, (match, url) => {
         let newUrl = new URL(url, targetUrl).href;
-        return url("/proxy?url=${newUrl}");
+        return `url("/proxy?url=${newUrl}")`;
       });
 
       res.setHeader('Content-Type', 'text/css');
