@@ -20,7 +20,7 @@ This depends on your wifi
 **CamoAPI** is one of the **easiest and fastest** vercel proxies you can use, it has **inspect** capabilities unblocked for **all** users, and it is being updated **daily**.
 ## How to use
 ## YOU MUST GIVE CREDIT
-To use Camoapi you need to copy the /api/index.js file into your website and copy the vercel.json and package.json into your the root directory.
+To use Camoapi you need to copy all files and folders except README.md into your site's root directory.
 Then go to <br> 
 https://[yourwebsite].[yourwebsite]**/proxy?url=https://[url, like google.com, github.com, etc...]**
 ## Discord
