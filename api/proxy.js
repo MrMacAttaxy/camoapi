@@ -1,26 +1,23 @@
 import axios from 'axios';
 
-const allowedDomains = ['example.com'];
-
-const isAllowedDomain = (url) => {
-  try {
-    const parsedUrl = new URL(url);
-    return allowedDomains.includes(parsedUrl.hostname);
-  } catch (error) {
-    return false;
-  }
-};
-
 export default async function handler(req, res) {
   const { url } = req.query;
   if (!url) return res.status(400).json({ error: 'Missing URL parameter' });
-  
-  if (!isAllowedDomain(url)) {
+
+  let decodedUrl;
+  try {
+    decodedUrl = decodeURIComponent(url);
+  } catch (error) {
+    return res.status(400).json({ error: 'Invalid URL encoding' });
+  }
+
+  const validUrlPattern = /^https?:\/\/[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)+/;
+  if (!validUrlPattern.test(decodedUrl)) {
     return res.status(403).json({ error: 'Domain not allowed' });
   }
 
   try {
-    const response = await axios.get(url, {
+    const response = await axios.get(decodedUrl, {
       responseType: 'arraybuffer',
       headers: {
         'User-Agent': req.headers['user-agent'],
