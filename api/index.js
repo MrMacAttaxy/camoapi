@@ -35,7 +35,11 @@ app.get('/proxy', async (req, res) => {
     if (contentType.includes('text/html')) {
       let htmlContent = response.data.toString('utf-8');
 
-      htmlContent = htmlContent.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
+      htmlContent = htmlContent.replace(/<script\s+[^>]*src=["'](?!https?:\/\/|\/proxy\?url=)([^"']+)["']/gi, (match, url) => {
+        let newUrl = new URL(url, targetUrl).href;
+        return `<script src="/proxy?url=${newUrl}"`;
+      });
+
       htmlContent = htmlContent.replace(/<iframe\s+[^>]*src=["'](?!https?:\/\/|\/proxy\?url=)([^"']+)["']/gi, (match, url) => {
         let newUrl = new URL(url, targetUrl).href;
         return `<iframe src="/proxy?url=${newUrl}"`;
@@ -65,8 +69,15 @@ app.get('/proxy', async (req, res) => {
       res.setHeader('Content-Type', 'text/css');
       res.status(response.status).send(cssContent);
     } else if (contentType.includes('application/javascript') || contentType.includes('text/javascript')) {
+      let jsContent = response.data.toString('utf-8');
+
+      jsContent = jsContent.replace(/(\b(?:src)=["'])(?!https?:\/\/|\/proxy\?url=)([^"']+)/gi, (match, prefix, url) => {
+        let newUrl = new URL(url, targetUrl).href;
+        return `${prefix}/proxy?url=${newUrl}"`;
+      });
+
       res.setHeader('Content-Type', 'application/javascript');
-      res.status(response.status).send(Buffer.from(response.data));
+      res.status(response.status).send(jsContent);
     } else {
       res.setHeader('Content-Type', contentType);
       res.status(response.status).send(Buffer.from(response.data));
