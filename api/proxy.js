@@ -37,20 +37,12 @@ export default async function handler(req, res) {
 
       htmlContent = htmlContent.replace(/(<[^>]+)(href|src|action|data-src|data-href)=["']([^"']+)["']/gi, (match, tag, attr, url) => {
         if (url.includes('google.com/search')) {
-          return `${tag}${attr}="${createProxyUrl(url, decodedUrl)}"`;
+          return `${tag}${attr}="${createGoogleSearchProxyUrl(url)}"`;
         }
         return `${tag}${attr}="${createProxyUrl(url, decodedUrl)}"`;
       });
 
       htmlContent = htmlContent.replace(/(<iframe[^>]+src=["'])([^"']+)["']/gi, (match, prefix, url) => {
-        return `${prefix}${createProxyUrl(url, decodedUrl)}"`;
-      });
-
-      htmlContent = htmlContent.replace(/(<link[^>]+href=["'])([^"']+)["']/gi, (match, prefix, url) => {
-        return `${prefix}${createProxyUrl(url, decodedUrl)}"`;
-      });
-
-      htmlContent = htmlContent.replace(/(<script[^>]+src=["'])([^"']+)["']/gi, (match, prefix, url) => {
         return `${prefix}${createProxyUrl(url, decodedUrl)}"`;
       });
 
@@ -73,4 +65,12 @@ function createProxyUrl(url, baseUrl) {
     return `/api/proxy?url=${encodeURIComponent(new URL(url, baseUrl).href)}`;
   }
   return `/api/proxy?url=${encodeURIComponent(url)}`;
+}
+
+function createGoogleSearchProxyUrl(url) {
+  const baseGoogleUrl = 'https://google.com/search';
+  const urlObj = new URL(url);
+  const queryParams = urlObj.searchParams;
+  const query = queryParams.get('q');
+  return `/api/proxy?url=${encodeURIComponent(`${baseGoogleUrl}?q=${query}`)}`;
 }
