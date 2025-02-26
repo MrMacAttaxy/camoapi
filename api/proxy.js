@@ -43,6 +43,14 @@ export default async function handler(req, res) {
         return `${prefix}${createProxyUrl(url, decodedUrl)}"`;
       });
 
+      htmlContent = htmlContent.replace(/(<link[^>]+href=["'])([^"']+)["']/gi, (match, prefix, url) => {
+        return `${prefix}${createProxyUrl(url, decodedUrl)}"`;
+      });
+
+      htmlContent = htmlContent.replace(/(<script[^>]+src=["'])([^"']+)["']/gi, (match, prefix, url) => {
+        return `${prefix}${createProxyUrl(url, decodedUrl)}"`;
+      });
+
       res.setHeader('Content-Type', 'text/html');
       res.status(response.status).send(htmlContent);
     } else if (contentType.includes('image/') || contentType.includes('video/')) {
