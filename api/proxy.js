@@ -16,13 +16,8 @@ export default async function handler(req, res) {
     return res.status(403).json({ error: 'Domain not allowed' });
   }
 
-  if (decodedUrl.includes('/api/proxy')) {
-    return res.status(400).json({ error: 'Proxying self is not allowed' });
-  }
-
-  if (decodedUrl.startsWith('https://google.com/search')) {
-    const searchUrl = `https://google.com/search?${new URL(decodedUrl).searchParams}`;
-    return res.redirect(302, `/api/proxy?url=${encodeURIComponent(searchUrl)}`);
+  if (decodedUrl.includes('camoapi.vercel.app/api/proxy')) {
+    return res.status(400).json({ error: 'Redirect loop detected' });
   }
 
   try {
@@ -54,6 +49,9 @@ export default async function handler(req, res) {
 
       res.setHeader('Content-Type', 'text/html');
       res.status(response.status).send(htmlContent);
+    } else if (contentType.includes('image/') || contentType.includes('video/')) {
+      res.setHeader('Content-Type', contentType);
+      res.status(response.status).send(response.data);
     } else {
       res.setHeader('Content-Type', contentType);
       res.status(response.status).send(response.data);
@@ -70,5 +68,11 @@ function createProxyUrl(url, baseUrl) {
   if (!absoluteUrlPattern.test(url)) {
     return `/api/proxy?url=${encodeURIComponent(new URL(url, baseUrl).href)}`;
   }
+  
+  // Handle chunk URLs specifically
+  if (url.includes('/assets/')) {
+    return `/api/proxy?url=${encodeURIComponent(url)}`;
+  }
+  
   return `/api/proxy?url=${encodeURIComponent(url)}`;
 }
