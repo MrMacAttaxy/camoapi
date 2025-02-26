@@ -20,6 +20,11 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Proxying self is not allowed' });
   }
 
+  if (decodedUrl.includes('google.com/search')) {
+    const searchUrl = createGoogleSearchUrl(decodedUrl);
+    return res.redirect(searchUrl);
+  }
+
   try {
     const response = await axios.get(decodedUrl, {
       responseType: 'arraybuffer',
@@ -68,8 +73,8 @@ function createProxyUrl(url, baseUrl) {
   return `/api/proxy?url=${encodeURIComponent(url)}`;
 }
 
-// New function to handle Google search URLs
-function createGoogleSearchUrl(query) {
-  const baseGoogleUrl = 'https://google.com/search';
-  return `${baseGoogleUrl}?q=${encodeURIComponent(query)}`;
+function createGoogleSearchUrl(decodedUrl) {
+  const urlParams = new URLSearchParams(decodedUrl.split('?')[1]);
+  const query = urlParams.get('q');
+  return `https://camoapi.vercel.app/api/proxy?url=${encodeURIComponent(`https://google.com/search?q=${query}`)}`;
 }
