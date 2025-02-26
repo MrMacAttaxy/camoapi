@@ -54,6 +54,9 @@ export default async function handler(req, res) {
 
       res.setHeader('Content-Type', 'text/html');
       res.status(response.status).send(htmlContent);
+    } else if (contentType.includes('image/') || contentType.includes('video/')) {
+      res.setHeader('Content-Type', contentType);
+      res.status(response.status).send(response.data);
     } else {
       res.setHeader('Content-Type', contentType);
       res.status(response.status).send(response.data);
