@@ -2,6 +2,13 @@ const express = require('express');
 const axios = require('axios');
 const app = express();
 
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  next();
+});
+
 app.get('/proxy', async (req, res) => {
   const { query } = req;
   let targetUrl = query.url;
@@ -29,6 +36,16 @@ app.get('/proxy', async (req, res) => {
       let htmlContent = response.data.toString('utf-8');
 
       htmlContent = htmlContent.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
+      htmlContent = htmlContent.replace(/<iframe\s+[^>]*src=["'](?!https?:\/\/|\/proxy\?url=)([^"']+)["']/gi, (match, url) => {
+        let newUrl = new URL(url, targetUrl).href;
+        return `<iframe src="/proxy?url=${newUrl}"`;
+      });
+
+      htmlContent = htmlContent.replace(/(\b(?:href|src)=["'])(?!https?:\/\/|\/proxy\?url=)([^"']+)/gi, (match, prefix, url) => {
+        let newUrl = new URL(url, targetUrl).href;
+        return `${prefix}/proxy?url=${newUrl}"`;
+      });
+
       htmlContent = htmlContent.replace(/<\/body>/, `
         <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
         <script>eruda.init();</script>
@@ -39,7 +56,8 @@ app.get('/proxy', async (req, res) => {
       res.status(response.status).send(htmlContent);
     } else if (contentType.includes('text/css')) {
       let cssContent = response.data.toString('utf-8');
-      cssContent = cssContent.replace(/url\(\s*["']?(?!https?:\/\/|\/proxy\?url=)(\/[^"')]+)["']?\s*\)/g, (match, url) => {
+
+      cssContent = cssContent.replace(/url\(\s*["']?(?!https?:\/\/|\/proxy\?url=)([^"')]+)["']?\s*\)/g, (match, url) => {
         let newUrl = new URL(url, targetUrl).href;
         return `url("/proxy?url=${newUrl}")`;
       });
