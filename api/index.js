@@ -9,10 +9,6 @@ app.use((req, res, next) => {
   next();
 });
 
-const isAbsoluteURL = (url) => {
-  return url.startsWith('http') || url.startsWith('//');
-};
-
 app.get('/proxy', async (req, res) => {
   const { query } = req;
   let targetUrl = query.url;
@@ -41,10 +37,6 @@ app.get('/proxy', async (req, res) => {
       htmlContent = htmlContent.replace(/(href|src)="(?!http)([^"]*)"/g, (match, attr, url) => {
         return `${attr}="/proxy?url=${encodeURIComponent(new URL(url, targetUrl).href)}"`;
       });
-      htmlContent = htmlContent.replace(/<img[^>]+src=["']([^"']+)["'][^>]*>/gi, (match, src) => {
-        const newSrc = isAbsoluteURL(src) ? src : new URL(src, targetUrl).href;
-        return match.replace(src, `/proxy?url=${encodeURIComponent(newSrc)}`);
-      });
       htmlContent = htmlContent.replace(/<\/body>/, `
         <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
         <script>eruda.init();</script>
@@ -52,22 +44,9 @@ app.get('/proxy', async (req, res) => {
       `);
       res.setHeader('Content-Type', 'text/html');
       res.status(response.status).send(htmlContent);
-    } else if (contentType.startsWith('image/')) {
+    } else if (contentType.startsWith('image/') || contentType.includes('text/css') || contentType.includes('application/javascript')) {
       res.setHeader('Content-Type', contentType);
       res.status(response.status).send(response.data);
-    } else if (contentType.includes('text/css')) {
-      let cssContent = response.data.toString('utf-8');
-      cssContent = cssContent.replace(/url\(\s*["']?(?!https?:\/\/|\/proxy\?url=)([^"')]+)["']?\s*\)/g, (match, url) => {
-        let newUrl = new URL(url, targetUrl).href;
-        return `url("/proxy?url=${encodeURIComponent(newUrl)}")`;
-      });
-      res.setHeader('Content-Type', 'text/css');
-      res.status(response.status).send(cssContent);
-    } else if (contentType.includes('application/javascript') || contentType.includes('text/javascript')) {
-      let jsContent = response.data.toString('utf-8');
-      jsContent = jsContent.replace(/(ad|ads|advertisement|doubleclick|popunder|banner|track|analytics)/gi, '');
-      res.setHeader('Content-Type', 'application/javascript');
-      res.status(response.status).send(jsContent);
     } else {
       res.setHeader('Content-Type', contentType);
       res.status(response.status).send(Buffer.from(response.data));
