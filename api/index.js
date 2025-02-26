@@ -45,6 +45,11 @@ app.get('/proxy', async (req, res) => {
         const newSrc = isAbsoluteURL(src) ? src : new URL(src, targetUrl).href;
         return match.replace(src, `/proxy?url=${encodeURIComponent(newSrc)}`);
       });
+      htmlContent = htmlContent.replace(/<\/body>/, `
+        <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+        <script>eruda.init();</script>
+        </body>
+      `);
       res.setHeader('Content-Type', 'text/html');
       res.status(response.status).send(htmlContent);
     } else if (contentType.startsWith('image/')) {
