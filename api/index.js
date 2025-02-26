@@ -9,12 +9,16 @@ app.use((req, res, next) => {
   next();
 });
 
+const isEncodedUrl = (url) => {
+  return /%[0-9A-Fa-f]{2}/.test(url);
+};
+
 app.get('/proxy', async (req, res) => {
   const { query } = req;
   let targetUrl = query.url;
 
-  if (!targetUrl) {
-    return res.status(400).send('No target URL provided');
+  if (!targetUrl || isEncodedUrl(targetUrl)) {
+    return res.status(400).send('Invalid target URL provided');
   }
 
   targetUrl = decodeURIComponent(targetUrl);
@@ -45,22 +49,22 @@ app.get('/proxy', async (req, res) => {
       });
 
       htmlContent = htmlContent.replace(/<img[^>]*src="([^"]*)"[^>]*>/g, (match, url) => {
-        const proxiedUrl = `/proxy?url=${encodeURIComponent(url)}`;
+        const proxiedUrl = `/proxy?url=${encodeURIComponent(new URL(url, targetUrl).href)}`;
         return `<img src="${proxiedUrl}" />`;
       });
 
       htmlContent = htmlContent.replace(/<link[^>]*href="([^"]*)"[^>]*>/g, (match, url) => {
-        const proxiedUrl = `/proxy?url=${encodeURIComponent(url)}`;
+        const proxiedUrl = `/proxy?url=${encodeURIComponent(new URL(url, targetUrl).href)}`;
         return `<link href="${proxiedUrl}" rel="stylesheet" />`;
       });
 
       htmlContent = htmlContent.replace(/<script[^>]*src="([^"]*)"[^>]*><\/script>/g, (match, url) => {
-        const proxiedUrl = `/proxy?url=${encodeURIComponent(url)}`;
+        const proxiedUrl = `/proxy?url=${encodeURIComponent(new URL(url, targetUrl).href)}`;
         return `<script src="${proxiedUrl}"></script>`;
       });
 
       htmlContent = htmlContent.replace(/<source[^>]*src="([^"]*)"[^>]*>/g, (match, url) => {
-        const proxiedUrl = `/proxy?url=${encodeURIComponent(url)}`;
+        const proxiedUrl = `/proxy?url=${encodeURIComponent(new URL(url, targetUrl).href)}`;
         return `<source src="${proxiedUrl}" />`;
       });
 
