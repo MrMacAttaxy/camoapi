@@ -35,8 +35,19 @@ export default async function handler(req, res) {
         </body>
       `);
 
+      htmlContent = htmlContent.replace(/(<[^>]+)(href|src|action|data-src|data-href)=["']([^"']+)["']/gi, (match, tag, attr, url) => {
+        return `${tag}${attr}="${createProxyUrl(url, decodedUrl)}"`;
+      });
+
+      htmlContent = htmlContent.replace(/(<iframe[^>]+src=["'])([^"']+)["']/gi, (match, prefix, url) => {
+        return `${prefix}${createProxyUrl(url, decodedUrl)}"`;
+      });
+
       res.setHeader('Content-Type', 'text/html');
       res.status(response.status).send(htmlContent);
+    } else if (contentType.includes('image/') || contentType.includes('video/')) {
+      res.setHeader('Content-Type', contentType);
+      res.status(response.status).send(response.data);
     } else {
       res.setHeader('Content-Type', contentType);
       res.status(response.status).send(response.data);
@@ -45,4 +56,13 @@ export default async function handler(req, res) {
     console.error('Proxy error:', error.message);
     res.status(500).json({ error: 'Error fetching resource', details: error.message });
   }
+}
+
+function createProxyUrl(url, baseUrl) {
+  if (!url) return url;
+  const absoluteUrlPattern = /^https?:\/\//;
+  if (!absoluteUrlPattern.test(url)) {
+    return `/api/proxy?url=${encodeURIComponent(new URL(url, baseUrl).href)}`;
+  }
+  return `/api/proxy?url=${encodeURIComponent(url)}`;
 }
