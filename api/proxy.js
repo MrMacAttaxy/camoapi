@@ -36,6 +36,9 @@ export default async function handler(req, res) {
       `);
 
       htmlContent = htmlContent.replace(/(<[^>]+)(href|src|action|data-src|data-href)=["']([^"']+)["']/gi, (match, tag, attr, url) => {
+        if (url.includes('google.com/search')) {
+          return `${tag}${attr}="${createProxyUrl(url, decodedUrl)}"`;
+        }
         return `${tag}${attr}="${createProxyUrl(url, decodedUrl)}"`;
       });
 
