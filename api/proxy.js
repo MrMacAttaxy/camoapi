@@ -16,6 +16,10 @@ export default async function handler(req, res) {
     return res.status(403).json({ error: 'Domain not allowed' });
   }
 
+  if (decodedUrl.includes('/api/proxy')) {
+    return res.status(400).json({ error: 'Proxying self is not allowed' });
+  }
+
   try {
     const response = await axios.get(decodedUrl, {
       responseType: 'arraybuffer',
