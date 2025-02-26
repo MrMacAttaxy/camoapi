@@ -16,10 +16,6 @@ export default async function handler(req, res) {
     return res.status(403).json({ error: 'Domain not allowed' });
   }
 
-  if (decodedUrl.includes('camoapi.vercel.app/api/proxy')) {
-    return res.status(400).json({ error: 'Redirect loop detected' });
-  }
-
   try {
     const response = await axios.get(decodedUrl, {
       responseType: 'arraybuffer',
@@ -68,11 +64,5 @@ function createProxyUrl(url, baseUrl) {
   if (!absoluteUrlPattern.test(url)) {
     return `/api/proxy?url=${encodeURIComponent(new URL(url, baseUrl).href)}`;
   }
-  
-  // Handle chunk URLs specifically
-  if (url.includes('/assets/')) {
-    return `/api/proxy?url=${encodeURIComponent(url)}`;
-  }
-  
   return `/api/proxy?url=${encodeURIComponent(url)}`;
 }
