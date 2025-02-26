@@ -20,9 +20,9 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Proxying self is not allowed' });
   }
 
-  if (decodedUrl.includes('google.com/search')) {
-    const searchUrl = createGoogleSearchUrl(decodedUrl);
-    return res.redirect(searchUrl);
+  if (decodedUrl.startsWith('https://google.com/search')) {
+    const searchUrl = `https://google.com/search?${new URL(decodedUrl).searchParams}`;
+    return res.redirect(302, `/api/proxy?url=${encodeURIComponent(searchUrl)}`);
   }
 
   try {
@@ -54,9 +54,6 @@ export default async function handler(req, res) {
 
       res.setHeader('Content-Type', 'text/html');
       res.status(response.status).send(htmlContent);
-    } else if (contentType.includes('image/') || contentType.includes('video/')) {
-      res.setHeader('Content-Type', contentType);
-      res.status(response.status).send(response.data);
     } else {
       res.setHeader('Content-Type', contentType);
       res.status(response.status).send(response.data);
@@ -74,10 +71,4 @@ function createProxyUrl(url, baseUrl) {
     return `/api/proxy?url=${encodeURIComponent(new URL(url, baseUrl).href)}`;
   }
   return `/api/proxy?url=${encodeURIComponent(url)}`;
-}
-
-function createGoogleSearchUrl(decodedUrl) {
-  const urlParams = new URLSearchParams(decodedUrl.split('?')[1]);
-  const query = urlParams.get('q');
-  return `https://camoapi.vercel.app/api/proxy?url=${encodeURIComponent(`https://google.com/search?q=${query}`)}`;
 }
